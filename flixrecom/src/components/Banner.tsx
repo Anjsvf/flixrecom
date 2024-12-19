@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Movie } from "../../types/Movie";
 
 type Content = {
   title: string;
@@ -15,59 +14,68 @@ type Content = {
 
 export default function Banner() {
   const [content, setContent] = useState<Content | null>(null);
-  const [isUpcoming, setIsUpcoming] = useState(false); 
+  const [isUpcoming, setIsUpcoming] = useState(false);
 
   useEffect(() => {
     const fetchContent = async () => {
-      const endpoint = isUpcoming
-        ? ["/movie/upcoming", "/tv/on_the_air"]
-        : ["/movie/now_playing", "/tv/airing_today"];
+      try {
+        const endpoint = isUpcoming
+          ? ["/movie/upcoming", "/tv/on_the_air"]
+          : ["/movie/now_playing", "/tv/airing_today"];
 
-      const [moviesResponse, seriesResponse] = await Promise.all(
-        endpoint.map((path) =>
-          axios.get(`${process.env.NEXT_PUBLIC_TMDB_BASE_URL}${path}`, {
-            params: {
-              api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-              language: "pt-BR",
-            },
-          })
-        )
-      );
+        const [moviesResponse, seriesResponse] = await Promise.all(
+          endpoint.map((path) =>
+            axios.get(`${process.env.NEXT_PUBLIC_TMDB_BASE_URL}${path}`, {
+              params: {
+                api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+                language: "pt-BR",
+              },
+            })
+          )
+        );
 
-      const allContent = [
-        ...moviesResponse.data.results.map((item: any) => ({
-          ...item,
-          type: "Filme",
-          date: item.release_date,
-        })),
-        ...seriesResponse.data.results.map((item: any) => ({
-          ...item,
-          type: "Série",
-          date: item.first_air_date,
-        })),
-      ];
+        const allContent: Content[] = [
+          ...moviesResponse.data.results.map((item: any) => ({
+            title: item.title || item.name || "Sem título",
+            overview: item.overview || "Descrição não disponível.",
+            backdrop_path: item.backdrop_path || "",
+            release_date: item.release_date,
+            first_air_date: item.first_air_date,
+            type: "Filme",
+          })),
+          ...seriesResponse.data.results.map((item: any) => ({
+            title: item.title || item.name || "Sem título",
+            overview: item.overview || "Descrição não disponível.",
+            backdrop_path: item.backdrop_path || "",
+            release_date: item.release_date,
+            first_air_date: item.first_air_date,
+            type: "Série",
+          })),
+        ];
 
-      const validContent = allContent.filter((item) => {
-        const currentDate = new Date();
-        const releaseDate = new Date(item.date);
-        return isUpcoming ? releaseDate > currentDate : releaseDate <= currentDate;
-      });
+        const validContent = allContent.filter((item) => {
+          const currentDate = new Date();
+          const releaseDate = new Date(item.release_date || item.first_air_date || "");
+          return isUpcoming ? releaseDate > currentDate : releaseDate <= currentDate;
+        });
 
-      const randomContent =
-        validContent[Math.floor(Math.random() * validContent.length)];
-      setContent(randomContent || null);
+        const randomContent =
+          validContent[Math.floor(Math.random() * validContent.length)];
+        setContent(randomContent || null);
+      } catch (error) {
+        console.error("Erro ao buscar conteúdo:", error);
+      }
     };
 
     fetchContent();
   }, [isUpcoming]);
 
- 
   useEffect(() => {
     const interval = setInterval(() => {
       setIsUpcoming((prev) => !prev);
     }, 10000);
 
-    return () => clearInterval(interval); 
+    return () => clearInterval(interval);
   }, []);
 
   if (!content) return null;

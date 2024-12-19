@@ -6,12 +6,12 @@ import axios from "axios";
 interface Content {
   id: number;
   title?: string;
-  name?: string; 
+  name?: string;
   backdrop_path: string | null;
   overview: string;
-  release_date?: string; 
-  first_air_date?: string; 
-  likes?: number; 
+  release_date?: string;
+  first_air_date?: string;
+  likes?: number;
 }
 
 interface Genre {
@@ -165,7 +165,6 @@ export default function Banner() {
           ))}
         </div>
 
-       
         <div className="flex gap-4">
           <select
             className="bg-gray-700 text-white px-4 py-2 rounded"
@@ -180,7 +179,6 @@ export default function Banner() {
             ))}
           </select>
 
-       
           <input
             type="number"
             className="bg-gray-700 text-white px-4 py-2 rounded w-32"
@@ -191,7 +189,6 @@ export default function Banner() {
         </div>
       </div>
 
-     
       {loading ? (
         <p className="text-white">Carregando...</p>
       ) : (

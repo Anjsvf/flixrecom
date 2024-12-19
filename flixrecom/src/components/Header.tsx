@@ -23,7 +23,7 @@ export default function Header() {
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [suggestions, setSuggestions] = useState<Movie[]>([]);  // Para armazenar sugestões
+  const [suggestions, setSuggestions] = useState<Movie[]>([]); // Para armazenar sugestões
 
   const handleSearch = async () => {
     if (query.trim() === "") {
@@ -129,7 +129,7 @@ export default function Header() {
               <input
                 type="text"
                 value={query}
-                onChange={handleInputChange}  // Atualizando o campo conforme o usuário digita
+                onChange={handleInputChange} // Atualizando o campo conforme o usuário digita
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSearch();
                 }}
@@ -143,7 +143,6 @@ export default function Header() {
                 Limpar
               </button>
             </div>
-            {/* <FaUserCircle className="cursor-pointer text-gray-300" /> */}
           </nav>
         </div>
       </header>
@@ -165,7 +164,7 @@ export default function Header() {
                 onClick={() => {
                   setQuery(movie.title || movie.name);
                   handleSearch();
-                  setSuggestions([]);  // Limpa as sugestões após a seleção
+                  setSuggestions([]); // Limpa as sugestões após a seleção
                 }}
               >
                 {movie.title || movie.name}
