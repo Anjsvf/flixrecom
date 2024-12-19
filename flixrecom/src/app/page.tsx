@@ -1,4 +1,5 @@
-"use client";
+
+"use client"
 
 import { useState } from "react";
 import Header from "@/components/Header";
@@ -21,10 +22,8 @@ export default function Home() {
       <Banner />
       <div className="container mx-auto px-4">
         <FilterMenu setCategory={setCategory} />
-        {/* <MovieRow title="Popular" fetchUrl={requests[category]} /> */}
         <MovieRow
-          title="Top Rated"
-          fetchUrl={`${requests[category]}&sort_by=vote_average.desc`}
+         
         />
       </div>
     </div>
