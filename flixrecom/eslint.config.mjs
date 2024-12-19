@@ -11,7 +11,7 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
-// Configuração ESLint combinando os "extends" do Next.js e TypeScript
+// Configuração ESLint com os "extends" corretos
 const eslintConfig = compat.extends([
   "next/core-web-vitals",  // Configurações do Next.js para performance e acessibilidade
   "next/typescript"        // Configurações do Next.js para TypeScript

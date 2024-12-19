@@ -28,29 +28,70 @@ export default function Banner() {
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Content | null>(null);
 
-  const fetchGenres = async () => {
-    try {
-      let url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/genre/${category}/list`;
-      if (category === "anime" || category === "tv") {
-        url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/genre/tv/list`;
-      } else if (category === "documentary") {
-        url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/genre/movie/list`;
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        let url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/genre/${category}/list`;
+        if (category === "anime" || category === "tv") {
+          url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/genre/tv/list`;
+        } else if (category === "documentary") {
+          url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/genre/movie/list`;
+        }
+
+        const response = await axios.get(url, {
+          params: { api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY },
+        });
+
+        const genresInPortuguese = response.data.genres.map((genre: Genre) => ({
+          id: genre.id,
+          name: translateGenreToPortuguese(genre.name),
+        }));
+
+        setGenres(genresInPortuguese);
+      } catch (error) {
+        console.error("Erro ao buscar gêneros:", error);
       }
+    };
 
-      const response = await axios.get(url, {
-        params: { api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY },
-      });
+    fetchGenres();
+  }, [category]);
 
-      const genresInPortuguese = response.data.genres.map((genre: Genre) => ({
-        id: genre.id,
-        name: translateGenreToPortuguese(genre.name),
-      }));
+  useEffect(() => {
+    const fetchContent = async () => {
+      setLoading(true);
+      try {
+        const params: Record<string, string | number> = {
+          api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY as string,
+        };
+        if (selectedGenre) params.with_genres = selectedGenre;
+        if (selectedYear) {
+          params.primary_release_year = selectedYear;
+          params.first_air_date_year = selectedYear;
+        }
 
-      setGenres(genresInPortuguese);
-    } catch (error) {
-      console.error("Erro ao buscar gêneros:", error);
-    }
-  };
+        let url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/${category}`;
+        if (category === "anime") {
+          url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/tv`;
+          params.with_genres = selectedGenre ? `${selectedGenre},16` : "16";
+        } else if (category === "documentary") {
+          url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/movie`;
+          params.with_genres = selectedGenre ? `${selectedGenre},99` : "99";
+        }
+
+        const response = await axios.get(url, { params });
+        const updatedContent = response.data.results
+          .map(validateContent)
+          .filter(Boolean) as Content[];
+        setContent(updatedContent);
+      } catch (error) {
+        console.error("Erro ao buscar conteúdo:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, [category, selectedGenre, selectedYear]);
 
   const translateGenreToPortuguese = (genreName: string): string => {
     const translations: Record<string, string> = {
@@ -91,48 +132,6 @@ export default function Banner() {
     };
   };
 
-  const fetchContent = async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, string | number> = {
-        api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY as string,
-      };
-      if (selectedGenre) params.with_genres = selectedGenre;
-      if (selectedYear) {
-        params.primary_release_year = selectedYear;
-        params.first_air_date_year = selectedYear;
-      }
-
-      let url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/${category}`;
-      if (category === "anime") {
-        url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/tv`;
-        params.with_genres = selectedGenre ? `${selectedGenre},16` : "16";
-      } else if (category === "documentary") {
-        url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/movie`;
-        params.with_genres = selectedGenre ? `${selectedGenre},99` : "99";
-      }
-
-      const response = await axios.get(url, { params });
-
-      const updatedContent = response.data.results
-        .map(validateContent)
-        .filter(Boolean) as Content[];
-      setContent(updatedContent);
-    } catch (error) {
-      console.error("Erro ao buscar conteúdo:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGenres();
-  }, [category]);
-
-  useEffect(() => {
-    fetchContent();
-  }, [category, selectedGenre, selectedYear]);
-
   const handleCategoryChange = (newCategory: "movie" | "tv" | "anime" | "documentary") => {
     setCategory(newCategory);
     setSelectedGenre(null);
@@ -146,7 +145,6 @@ export default function Banner() {
   return (
     <div className="banner p-4">
       <div className="flex justify-between items-center mb-6">
-        {/* Filtros de Categoria */}
         <div className="flex gap-4">
           {["movie", "tv", "anime", "documentary"].map((cat) => (
             <button
@@ -166,7 +164,6 @@ export default function Banner() {
             </button>
           ))}
         </div>
-
         <div className="flex gap-4">
           <select
             className="bg-gray-700 text-white px-4 py-2 rounded"
@@ -180,7 +177,6 @@ export default function Banner() {
               </option>
             ))}
           </select>
-
           <input
             type="number"
             className="bg-gray-700 text-white px-4 py-2 rounded w-32"
@@ -190,7 +186,6 @@ export default function Banner() {
           />
         </div>
       </div>
-
       {loading ? (
         <p className="text-white">Carregando...</p>
       ) : (
@@ -218,8 +213,6 @@ export default function Banner() {
           ))}
         </div>
       )}
-
-      {/* Modal */}
       {selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center overflow-y-auto z-50">
           <div className="bg-gray-900 p-4 rounded-md max-w-md mx-auto relative overflow-y-auto">
