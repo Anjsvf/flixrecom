@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { FaSearch, FaUserCircle, FaStar } from "react-icons/fa";
+import { FaSearch, FaStar } from "react-icons/fa";
 
 interface Movie {
   id: number;
@@ -18,12 +18,16 @@ interface Movie {
   production_countries: { name: string }[];
 }
 
+interface ApiResponse {
+  results: Movie[];
+}
+
 export default function Header() {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [suggestions, setSuggestions] = useState<Movie[]>([]); // Para armazenar sugestões
+  const [suggestions, setSuggestions] = useState<Movie[]>([]);
 
   const handleSearch = async () => {
     if (query.trim() === "") {
@@ -34,15 +38,14 @@ export default function Header() {
     setErrorMessage("");
 
     try {
-      let params: any = {
+      const params = {
         api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
         language: "pt-BR",
         include_adult: false,
+        query: query,
       };
 
-      params.query = query;
-
-      const response = await axios.get(
+      const response = await axios.get<ApiResponse>(
         `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
         { params }
       );
@@ -57,7 +60,6 @@ export default function Header() {
     }
   };
 
-  // Função para buscar sugestões enquanto o usuário digita
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
@@ -68,14 +70,14 @@ export default function Header() {
     }
 
     try {
-      let params = {
+      const params = {
         api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
         language: "pt-BR",
         query: value,
         include_adult: false,
       };
 
-      const response = await axios.get(
+      const response = await axios.get<ApiResponse>(
         `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
         { params }
       );
@@ -129,7 +131,7 @@ export default function Header() {
               <input
                 type="text"
                 value={query}
-                onChange={handleInputChange} // Atualizando o campo conforme o usuário digita
+                onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSearch();
                 }}
@@ -153,7 +155,6 @@ export default function Header() {
         </div>
       )}
 
-      {/* Exibindo sugestões de pesquisa */}
       {suggestions.length > 0 && query && (
         <div className="absolute bg-gray-700 w-full mt-2 rounded-lg shadow-lg z-50">
           <ul className="text-white">
@@ -164,7 +165,7 @@ export default function Header() {
                 onClick={() => {
                   setQuery(movie.title || movie.name);
                   handleSearch();
-                  setSuggestions([]); // Limpa as sugestões após a seleção
+                  setSuggestions([]);
                 }}
               >
                 {movie.title || movie.name}

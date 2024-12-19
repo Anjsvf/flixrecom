@@ -114,7 +114,9 @@ export default function Banner() {
 
       const response = await axios.get(url, { params });
 
-      const updatedContent = response.data.results.map(validateContent).filter(Boolean) as Content[];
+      const updatedContent = response.data.results
+        .map(validateContent)
+        .filter(Boolean) as Content[];
       setContent(updatedContent);
     } catch (error) {
       console.error("Erro ao buscar conteúdo:", error);
