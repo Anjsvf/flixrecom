@@ -5,7 +5,7 @@
 import Header from "@/components/Header";
 import Banner from "@/components/Banner";
 import MovieRow from "@/components/MovieRow";
-import FilterMenu from "@/components/FilterMenu";
+// import FilterMenu from "@/components/FilterMenu";
 
 export default function Home() {
   // const [category, setCategory] = useState("movies");

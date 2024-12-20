@@ -19,12 +19,12 @@ export default function Banner() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const endpoint = isUpcoming
+        const endpoints = isUpcoming
           ? ["/movie/upcoming", "/tv/on_the_air"]
           : ["/movie/now_playing", "/tv/airing_today"];
 
         const [moviesResponse, seriesResponse] = await Promise.all(
-          endpoint.map((path) =>
+          endpoints.map((path) =>
             axios.get(`${process.env.NEXT_PUBLIC_TMDB_BASE_URL}${path}`, {
               params: {
                 api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
@@ -84,11 +84,13 @@ export default function Banner() {
     <div
       className="relative h-[500px] bg-cover bg-center text-white"
       style={{
-        backgroundImage: `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`,
+        backgroundImage: content.backdrop_path
+          ? `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`
+          : "url(/placeholder.jpg)",
       }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-      <div className="absolute bottom-10 left-10">
+      <div className="absolute bottom-10 left-10 p-4">
         <h2 className="text-4xl font-bold">
           {content.title}{" "}
           <span className="text-sm font-light">
@@ -97,7 +99,7 @@ export default function Banner() {
           </span>
         </h2>
         <p className="max-w-md text-gray-300 mt-2">{content.overview}</p>
-        <button className="mt-4 px-6 py-3 bg-red-600 rounded hover:bg-red-700">
+        <button className="mt-4 px-6 py-3 bg-red-600 rounded hover:bg-red-700 transition">
           {isUpcoming ? "EM BREVE" : "LANÇADO RECENTEMENTE"}
         </button>
       </div>

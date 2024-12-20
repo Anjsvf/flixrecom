@@ -30,32 +30,31 @@ export default function Header() {
   const [suggestions, setSuggestions] = useState<Movie[]>([]);
 
   const handleSearch = async () => {
-    if (query.trim() === "") {
+    if (!query.trim()) {
       setSearchResults([]);
       return;
     }
 
-    setErrorMessage("");
-
     try {
+      setErrorMessage("");
       const params = {
         api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
         language: "pt-BR",
         include_adult: false,
-        query: query,
+        query,
       };
 
-      const response = await axios.get<ApiResponse>(
+      const { data } = await axios.get<ApiResponse>(
         `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
         { params }
       );
 
-      if (response.data.results.length === 0) {
+      if (data.results.length === 0) {
         setErrorMessage("Nenhum resultado encontrado.");
+      } else {
+        setSearchResults(data.results);
       }
-
-      setSearchResults(response.data.results);
-    } catch (error) {
+    } catch {
       setErrorMessage("Erro ao buscar resultados. Tente novamente.");
     }
   };
@@ -64,7 +63,7 @@ export default function Header() {
     const value = e.target.value;
     setQuery(value);
 
-    if (value.trim() === "") {
+    if (!value.trim()) {
       setSuggestions([]);
       return;
     }
@@ -77,13 +76,13 @@ export default function Header() {
         include_adult: false,
       };
 
-      const response = await axios.get<ApiResponse>(
+      const { data } = await axios.get<ApiResponse>(
         `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
         { params }
       );
 
-      setSuggestions(response.data.results);
-    } catch (error) {
+      setSuggestions(data.results);
+    } catch {
       setErrorMessage("Erro ao buscar sugestões.");
     }
   };
@@ -98,7 +97,7 @@ export default function Header() {
   const fetchMovieDetails = async (movieId: number, isTv: boolean) => {
     try {
       const endpoint = isTv ? `/tv/${movieId}` : `/movie/${movieId}`;
-      const response = await axios.get(
+      const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}${endpoint}`,
         {
           params: {
@@ -109,7 +108,7 @@ export default function Header() {
         }
       );
 
-      setSelectedMovie(response.data);
+      setSelectedMovie(data);
     } catch {
       setErrorMessage("Erro ao carregar detalhes do filme/série.");
     }
@@ -125,6 +124,7 @@ export default function Header() {
               <button
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition"
                 onClick={handleSearch}
+                aria-label="Pesquisar"
               >
                 <FaSearch />
               </button>
@@ -132,15 +132,15 @@ export default function Header() {
                 type="text"
                 value={query}
                 onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSearch();
-                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 placeholder="Pesquise por filmes, séries ou animes..."
                 className="pl-10 bg-gray-700 text-white px-4 py-2 rounded-lg placeholder-gray-400 focus:ring-2 focus:ring-red-500 outline-none"
+                aria-label="Campo de busca"
               />
               <button
                 onClick={handleClear}
                 className="ml-2 text-gray-400 hover:text-white transition"
+                aria-label="Limpar busca"
               >
                 Limpar
               </button>
@@ -155,6 +155,7 @@ export default function Header() {
         </div>
       )}
 
+      {/* Renderiza sugestões */}
       {suggestions.length > 0 && query && (
         <div className="absolute bg-gray-700 w-full mt-2 rounded-lg shadow-lg z-50">
           <ul className="text-white">
@@ -175,6 +176,7 @@ export default function Header() {
         </div>
       )}
 
+      {/* Renderiza os resultados */}
       {searchResults.length > 0 && (
         <div className="container mx-auto mt-20 p-4">
           <h2 className="text-xl font-bold text-white">Resultados da Pesquisa:</h2>
@@ -186,58 +188,17 @@ export default function Header() {
                 onClick={() => fetchMovieDetails(movie.id, !!movie.first_air_date)}
               >
                 <img
-                  src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "/placeholder.jpg"}
+                  src={
+                    movie.poster_path
+                      ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                      : "/placeholder.jpg"
+                  }
                   alt={movie.title || movie.name}
                   className="w-full h-[300px] object-cover rounded"
                 />
                 <p className="text-white mt-2">{movie.title || movie.name}</p>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {selectedMovie && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center overflow-y-auto z-50">
-          <div className="bg-gray-900 p-4 rounded-md max-w-md mx-auto relative overflow-y-auto">
-            <button
-              className="absolute top-3 right-3 text-white bg-red-500 px-3 py-1 text-sm rounded"
-              onClick={() => setSelectedMovie(null)}
-            >
-              Fechar
-            </button>
-            <h2 className="text-xl font-bold text-white mb-3">{selectedMovie.title || selectedMovie.name}</h2>
-            <p className="text-gray-400 text-sm italic mb-2">
-              Tipo: {selectedMovie.first_air_date ? "Série" : "Filme"}
-            </p>
-            <img
-              src={selectedMovie.backdrop_path ? `https://image.tmdb.org/t/p/w500${selectedMovie.backdrop_path}` : "/placeholder.jpg"}
-              alt={selectedMovie.title || selectedMovie.name}
-              className="w-full h-32 object-cover rounded mb-3"
-            />
-            <p className="mb-3 text-gray-300 text-sm">{selectedMovie.overview}</p>
-            <p className="text-gray-300 text-sm">
-              Ano de Lançamento: {new Date(selectedMovie.release_date || selectedMovie.first_air_date).getFullYear()}
-            </p>
-            <p className="text-gray-300 text-sm mt-1">
-              País: {selectedMovie.production_countries?.map((country) => country.name).join(", ")}
-            </p>
-            <div className="flex items-center mt-2">
-              <p className="text-gray-300 text-sm mr-1">Classificação:</p>
-              {Array.from({ length: 5 }, (_, i) => (
-                <FaStar
-                  key={i}
-                  className={`text-yellow-500 text-xs ${i < Math.round(selectedMovie.vote_average / 2) ? "" : "opacity-25"}`}
-                />
-              ))}
-              <p className="text-gray-300 text-sm ml-1">({selectedMovie.vote_count} votos)</p>
-            </div>
-            <p className="text-gray-300 text-sm mt-2">
-              Gêneros: {selectedMovie.genres?.map((genre) => genre.name).join(", ")}
-            </p>
-            <p className="text-gray-300 text-sm mt-2">
-              Principais Atores: {selectedMovie.credits?.cast.slice(0, 3).map((actor) => actor.name).join(", ")}
-            </p>
           </div>
         </div>
       )}
