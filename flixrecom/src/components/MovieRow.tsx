@@ -118,16 +118,24 @@ export default function Banner() {
     return translations[genreName] || genreName;
   };
 
-  const validateContent = (item: any): Content | null => {
-    if (!item.id || (!item.title && !item.name)) return null;
+  const validateContent = (item: Record<string, unknown>): Content | null => {
+    if (
+      typeof item.id !== "number" ||
+      (!item.title && !item.name) ||
+      typeof item.overview !== "string" ||
+      (item.backdrop_path !== null && typeof item.backdrop_path !== "string")
+    ) {
+      return null;
+    }
+
     return {
       id: item.id,
-      title: item.title || undefined,
-      name: item.name || undefined,
-      backdrop_path: item.backdrop_path || null,
-      overview: item.overview || "",
-      release_date: item.release_date || undefined,
-      first_air_date: item.first_air_date || undefined,
+      title: typeof item.title === "string" ? item.title : undefined,
+      name: typeof item.name === "string" ? item.name : undefined,
+      backdrop_path: item.backdrop_path,
+      overview: item.overview,
+      release_date: typeof item.release_date === "string" ? item.release_date : undefined,
+      first_air_date: typeof item.first_air_date === "string" ? item.first_air_date : undefined,
       likes: Math.floor(Math.random() * 1000),
     };
   };
@@ -239,7 +247,7 @@ export default function Banner() {
             />
             <p className="text-gray-300">{selectedItem.overview}</p>
             <p className="mt-4 text-gray-400 text-sm">
-              Relevante para: {selectedItem.likes} usuários
+              Relevante para: {selectedItem.likes} pessoas.
             </p>
           </div>
         </div>
