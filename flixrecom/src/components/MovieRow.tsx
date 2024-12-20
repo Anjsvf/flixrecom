@@ -151,13 +151,13 @@ export default function Banner() {
   };
 
   return (
-    <div className="banner p-4">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-4">
+    <div className="banner p-4 bg-gray-900">
+      <div className="flex flex-wrap justify-between items-center mb-6">
+        <div className="flex gap-4 mb-4 sm:mb-0">
           {["movie", "tv", "anime", "documentary"].map((cat) => (
             <button
               key={cat}
-              className={`px-4 py-2 rounded ${
+              className={`px-4 py-2 rounded-full text-sm ${
                 category === cat ? "bg-red-500 text-white" : "bg-gray-700 text-white"
               }`}
               onClick={() => handleCategoryChange(cat as typeof category)}
@@ -172,9 +172,9 @@ export default function Banner() {
             </button>
           ))}
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 mb-4 sm:mb-0">
           <select
-            className="bg-gray-700 text-white px-4 py-2 rounded"
+            className="bg-gray-700 text-white px-4 py-2 rounded-full text-sm"
             value={selectedGenre || ""}
             onChange={(e) => setSelectedGenre(Number(e.target.value) || null)}
           >
@@ -187,7 +187,7 @@ export default function Banner() {
           </select>
           <input
             type="number"
-            className="bg-gray-700 text-white px-4 py-2 rounded w-32"
+            className="bg-gray-700 text-white px-4 py-2 rounded-full w-32 text-sm"
             placeholder="Digite o ano"
             value={selectedYear || ""}
             onChange={(e) => setSelectedYear(Number(e.target.value) || null)}
@@ -197,11 +197,11 @@ export default function Banner() {
       {loading ? (
         <p className="text-white">Carregando...</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {content.map((item) => (
             <div
               key={item.id}
-              className="bg-gray-800 p-4 rounded-lg cursor-pointer"
+              className="bg-gray-800 p-4 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105"
               onClick={() => setSelectedItem(item)}
             >
               <img
@@ -213,8 +213,8 @@ export default function Banner() {
                 alt={item.title || item.name || "Sem título disponível"}
                 className="w-full h-48 object-cover rounded-md"
               />
-              <h3 className="text-white mt-2 font-bold">{item.title || item.name}</h3>
-              <p className="text-gray-400">
+              <h3 className="text-white mt-2 font-bold text-sm sm:text-base">{item.title || item.name}</h3>
+              <p className="text-gray-400 text-xs sm:text-sm">
                 {new Date(item.release_date || item.first_air_date || "").getFullYear()}
               </p>
             </div>
@@ -225,7 +225,7 @@ export default function Banner() {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center overflow-y-auto z-50">
           <div className="bg-gray-900 p-4 rounded-md max-w-md mx-auto relative overflow-y-auto">
             <button
-              className="absolute top-3 right-3 text-white bg-red-500 px-3 py-1 text-sm rounded"
+              className="absolute top-3 right-3 text-white bg-red-500 px-3 py-1 text-sm rounded-full"
               onClick={closeModal}
             >
               Fechar
