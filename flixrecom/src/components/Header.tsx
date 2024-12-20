@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import { FaSearch, FaStar } from "react-icons/fa";
+import { FaSearch } from "react-icons/fa";
 
 interface Movie {
   id: number;
