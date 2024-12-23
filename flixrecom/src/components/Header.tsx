@@ -4,18 +4,18 @@ import { FaSearch, FaUserCircle, FaStar } from "react-icons/fa";
 
 interface Movie {
   id: number;
-  title: string;
-  name: string;
-  poster_path: string | null;
-  backdrop_path: string | null;
-  overview: string;
-  release_date: string;
-  first_air_date: string;
-  vote_average: number;
-  vote_count: number;
-  genres: { id: number; name: string }[];
-  credits: { cast: { id: number; name: string }[] };
-  production_countries: { name: string }[];
+  title?: string;
+  name?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  overview?: string;
+  release_date?: string;
+  first_air_date?: string;
+  vote_average?: number;
+  vote_count?: number;
+  genres?: { id: number; name: string }[];
+  credits?: { cast: { id: number; name: string }[] };
+  production_countries?: { name: string }[];
 }
 
 export default function Header() {
@@ -23,28 +23,32 @@ export default function Header() {
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [suggestions, setSuggestions] = useState<Movie[]>([]); // Para armazenar sugestões
+  const [suggestions, setSuggestions] = useState<Movie[]>([]);
 
   const handleSearch = async () => {
-    if (query.trim() === "") {
+    if (!query.trim()) {
       setSearchResults([]);
       return;
     }
 
     setErrorMessage("");
 
+    if (!process.env.NEXT_PUBLIC_TMDB_API_KEY || !process.env.NEXT_PUBLIC_TMDB_BASE_URL) {
+      setErrorMessage("Configuração da API inválida.");
+      return;
+    }
+
     try {
-      let params: any = {
-        api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-        language: "pt-BR",
-        include_adult: false,
-      };
-
-      params.query = query;
-
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
-        { params }
+        {
+          params: {
+            api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+            language: "pt-BR",
+            query,
+            include_adult: false,
+          },
+        }
       );
 
       if (response.data.results.length === 0) {
@@ -52,36 +56,34 @@ export default function Header() {
       }
 
       setSearchResults(response.data.results);
-    } catch (error) {
+    } catch {
       setErrorMessage("Erro ao buscar resultados. Tente novamente.");
     }
   };
 
-  // Função para buscar sugestões enquanto o usuário digita
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
 
-    if (value.trim() === "") {
+    if (!value.trim()) {
       setSuggestions([]);
       return;
     }
 
     try {
-      let params = {
-        api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-        language: "pt-BR",
-        query: value,
-        include_adult: false,
-      };
-
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
-        { params }
+        {
+          params: {
+            api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+            language: "pt-BR",
+            query: value,
+            include_adult: false,
+          },
+        }
       );
-
       setSuggestions(response.data.results);
-    } catch (error) {
+    } catch {
       setErrorMessage("Erro ao buscar sugestões.");
     }
   };
@@ -129,7 +131,7 @@ export default function Header() {
               <input
                 type="text"
                 value={query}
-                onChange={handleInputChange}  // Atualizando o campo conforme o usuário digita
+                onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSearch();
                 }}
@@ -154,7 +156,6 @@ export default function Header() {
         </div>
       )}
 
-      {/* Exibindo sugestões de pesquisa */}
       {suggestions.length > 0 && query && (
         <div className="absolute bg-gray-700 w-full mt-2 rounded-lg shadow-lg z-50">
           <ul className="text-white">
@@ -163,9 +164,9 @@ export default function Header() {
                 key={movie.id}
                 className="p-2 hover:bg-gray-600 cursor-pointer"
                 onClick={() => {
-                  setQuery(movie.title || movie.name);
+                  setQuery(movie.title || movie.name || "");
                   handleSearch();
-                  setSuggestions([]);  // Limpa as sugestões após a seleção
+                  setSuggestions([]);
                 }}
               >
                 {movie.title || movie.name}
@@ -187,7 +188,7 @@ export default function Header() {
               >
                 <img
                   src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "/placeholder.jpg"}
-                  alt={movie.title || movie.name}
+                  alt={movie.title || movie.name || "Imagem não disponível"}
                   className="w-full h-[300px] object-cover rounded"
                 />
                 <p className="text-white mt-2">{movie.title || movie.name}</p>
@@ -217,9 +218,9 @@ export default function Header() {
             />
             <p className="mb-3 text-gray-300 text-sm">{selectedMovie.overview}</p>
             <p className="text-gray-300 text-sm">
-              Ano de Lançamento: {new Date(selectedMovie.release_date || selectedMovie.first_air_date).getFullYear()}
+              Ano de Lançamento: {new Date(selectedMovie.release_date || selectedMovie.first_air_date || "").getFullYear()}
             </p>
-            <p className="text-gray-300 text-sm mt-1">
+            <p className="text-gray-300 text-sm">
               País: {selectedMovie.production_countries?.map((country) => country.name).join(", ")}
             </p>
             <div className="flex items-center mt-2">
@@ -227,7 +228,7 @@ export default function Header() {
               {Array.from({ length: 5 }, (_, i) => (
                 <FaStar
                   key={i}
-                  className={`text-yellow-500 text-xs ${i < Math.round(selectedMovie.vote_average / 2) ? "" : "opacity-25"}`}
+                  className={`text-yellow-500 text-xs ${i < Math.round((selectedMovie.vote_average || 0) / 2) ? "" : "opacity-25"}`}
                 />
               ))}
               <p className="text-gray-300 text-sm ml-1">({selectedMovie.vote_count} votos)</p>
