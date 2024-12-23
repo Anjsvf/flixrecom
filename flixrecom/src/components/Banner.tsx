@@ -3,6 +3,16 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+// Define os tipos para os itens retornados pela API
+type ApiResponseItem = {
+  title?: string;
+  name?: string;
+  overview?: string;
+  backdrop_path?: string;
+  release_date?: string;
+  first_air_date?: string;
+};
+
 type Content = {
   title: string;
   overview: string;
@@ -35,7 +45,7 @@ export default function Banner() {
         );
 
         const allContent: Content[] = [
-          ...moviesResponse.data.results.map((item: any) => ({
+          ...moviesResponse.data.results.map((item: ApiResponseItem) => ({
             title: item.title || item.name || "Sem título",
             overview: item.overview || "Descrição não disponível.",
             backdrop_path: item.backdrop_path || "",
@@ -43,7 +53,7 @@ export default function Banner() {
             first_air_date: item.first_air_date,
             type: "Filme",
           })),
-          ...seriesResponse.data.results.map((item: any) => ({
+          ...seriesResponse.data.results.map((item: ApiResponseItem) => ({
             title: item.title || item.name || "Sem título",
             overview: item.overview || "Descrição não disponível.",
             backdrop_path: item.backdrop_path || "",
