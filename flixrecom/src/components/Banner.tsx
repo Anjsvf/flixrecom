@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-// Define os tipos para os itens retornados pela API
 type ApiResponseItem = {
   title?: string;
   name?: string;
@@ -92,7 +91,7 @@ export default function Banner() {
 
   return (
     <div
-      className="relative h-[500px] bg-cover bg-center text-white"
+      className="relative h-[300px] md:h-[500px] bg-cover bg-center text-white"
       style={{
         backgroundImage: content.backdrop_path
           ? `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`
@@ -100,16 +99,18 @@ export default function Banner() {
       }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-      <div className="absolute bottom-10 left-10 p-4">
-        <h2 className="text-4xl font-bold">
+      <div className="absolute bottom-5 left-5 p-4 md:bottom-10 md:left-10">
+        <h2 className="text-2xl md:text-4xl font-bold">
           {content.title}{" "}
-          <span className="text-sm font-light">
+          <span className="text-sm md:text-base font-light">
             ({content.type} -{" "}
             {isUpcoming ? "Em breve" : "Lançado recentemente"})
           </span>
         </h2>
-        <p className="max-w-md text-gray-300 mt-2">{content.overview}</p>
-        <button className="mt-4 px-6 py-3 bg-red-600 rounded hover:bg-red-700 transition">
+        <p className="text-sm md:text-base text-gray-300 mt-2 max-w-xs md:max-w-md">
+          {content.overview}
+        </p>
+        <button className="mt-4 px-4 py-2 md:px-6 md:py-3 bg-red-600 rounded hover:bg-red-700 transition">
           {isUpcoming ? "EM BREVE" : "LANÇADO RECENTEMENTE"}
         </button>
       </div>

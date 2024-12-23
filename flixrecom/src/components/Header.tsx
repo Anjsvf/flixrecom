@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import { FaSearch, FaUserCircle, FaStar } from "react-icons/fa";
+import { FaSearch, FaStar } from "react-icons/fa";
 
 interface Movie {
   id: number;
@@ -121,7 +121,7 @@ export default function Header() {
         <div className="container mx-auto flex justify-between items-center px-4 py-3">
           <h1 className="text-2xl font-bold text-red-600">flixrecom</h1>
           <nav className="flex gap-4 items-center text-gray-300">
-            <div className="relative flex items-center">
+            <div className="relative flex items-center w-full md:w-auto">
               <button
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition"
                 onClick={handleSearch}
@@ -136,7 +136,7 @@ export default function Header() {
                   if (e.key === "Enter") handleSearch();
                 }}
                 placeholder="Pesquise por filmes, séries ou animes..."
-                className="pl-10 bg-gray-700 text-white px-4 py-2 rounded-lg placeholder-gray-400 focus:ring-2 focus:ring-red-500 outline-none"
+                className="pl-10 bg-gray-700 text-white px-4 py-2 rounded-lg placeholder-gray-400 focus:ring-2 focus:ring-red-500 outline-none w-full md:w-auto"
               />
               <button
                 onClick={handleClear}
@@ -145,7 +145,7 @@ export default function Header() {
                 Limpar
               </button>
             </div>
-            <FaUserCircle className="cursor-pointer text-gray-300" />
+           
           </nav>
         </div>
       </header>
@@ -179,7 +179,7 @@ export default function Header() {
       {searchResults.length > 0 && (
         <div className="container mx-auto mt-20 p-4">
           <h2 className="text-xl font-bold text-white">Resultados da Pesquisa:</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
             {searchResults.map((movie) => (
               <div
                 key={movie.id}
@@ -191,7 +191,7 @@ export default function Header() {
                   alt={movie.title || movie.name || "Imagem não disponível"}
                   className="w-full h-[300px] object-cover rounded"
                 />
-                <p className="text-white mt-2">{movie.title || movie.name}</p>
+                <p className="text-white mt-2 text-sm">{movie.title || movie.name}</p>
               </div>
             ))}
           </div>
