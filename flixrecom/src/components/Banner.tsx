@@ -99,18 +99,18 @@ export default function Banner() {
       }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-      <div className="absolute bottom-5 left-5 p-4 md:bottom-10 md:left-10">
-        <h2 className="text-2xl md:text-4xl font-bold">
+      <div className="absolute bottom-5 left-5 p-4 md:bottom-10 md:left-10 lg:left-20 lg:bottom-20">
+        <h2 className="text-2xl md:text-4xl font-bold text-white">
           {content.title}{" "}
           <span className="text-sm md:text-base font-light">
             ({content.type} -{" "}
             {isUpcoming ? "Em breve" : "Lançado recentemente"})
           </span>
         </h2>
-        <p className="text-sm md:text-base text-gray-300 mt-2 max-w-xs md:max-w-md">
+        <p className="text-sm md:text-base text-gray-300 mt-2 max-w-xs md:max-w-md overflow-hidden text-ellipsis line-clamp-3">
           {content.overview}
         </p>
-        <button className="mt-4 px-4 py-2 md:px-6 md:py-3 bg-red-600 rounded hover:bg-red-700 transition">
+        <button className="mt-4 px-4 py-2 md:px-6 md:py-3 bg-red-600 rounded hover:bg-red-700 transition-all duration-300 ease-in-out">
           {isUpcoming ? "EM BREVE" : "LANÇADO RECENTEMENTE"}
         </button>
       </div>
