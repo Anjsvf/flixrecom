@@ -156,25 +156,39 @@ export default function Header() {
         </div>
       )}
 
-      {suggestions.length > 0 && query && (
-        <div className="absolute bg-gray-700 w-full mt-2 rounded-lg shadow-lg z-50">
-          <ul className="text-white">
-            {suggestions.slice(0, 5).map((movie) => (
-              <li
-                key={movie.id}
-                className="p-2 hover:bg-gray-600 cursor-pointer"
-                onClick={() => {
-                  setQuery(movie.title || movie.name || "");
-                  handleSearch();
-                  setSuggestions([]);
-                }}
-              >
-                {movie.title || movie.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+{suggestions.length > 0 && query && (
+  <div className="absolute bg-gray-700 w-full mt-16 sm:mt-20 md:mt-24 rounded-lg shadow-lg z-50"> {/* Margem maior e responsiva */}
+    <ul className="text-white divide-y divide-gray-600">
+      {suggestions.slice(0, 5).map((movie) => (
+        <li
+          key={movie.id}
+          className="p-2 hover:bg-gray-600 cursor-pointer transition duration-200 ease-in-out"
+          onClick={() => {
+            setQuery(movie.title || movie.name || "");
+            handleSearch();
+            setSuggestions([]);
+          }}
+        >
+          <div className="flex items-center space-x-2">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 overflow-hidden rounded-md"> {/* Imagem responsiva */}
+              <img
+                src={
+                  movie.backdrop_path
+                    ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path}`
+                    : "/placeholder.jpg"
+                }
+                alt={movie.title || movie.name || "No title available"}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="text-sm sm:text-base lg:text-lg">{movie.title || movie.name}</span> {/* Texto responsivo */}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
 
       {searchResults.length > 0 && (
         <div className="container mx-auto mt-20 p-4">
