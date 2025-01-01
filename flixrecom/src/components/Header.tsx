@@ -148,30 +148,33 @@ export default function Header() {
         <div className="container mx-auto flex justify-between items-center px-4 py-3">
           <h1 className="text-2xl font-bold text-red-600">flixrecom</h1>
           <nav className="flex gap-4 items-center text-gray-300">
-            <div className="relative flex items-center w-full md:w-auto">
-              <button
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition"
-                onClick={handleSearch}
-              >
-                <FaSearch />
-              </button>
-              <input
-                type="text"
-                value={query}
-                onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSearch();
-                }}
-                placeholder="Pesquise por filmes, séries ou animes..."
-                className="pl-10 bg-gray-700 text-white px-4 py-2 rounded-lg placeholder-gray-400 focus:ring-2 focus:ring-red-500 outline-none w-full md:w-auto"
-              />
-              <button
-                onClick={handleClear}
-                className="ml-2 text-gray-400 hover:text-white transition"
-              >
-                Limpar
-              </button>
-            </div>
+          <div className="relative flex items-center w-full md:w-auto">
+  <button
+    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition"
+    onClick={handleSearch}
+  >
+    <FaSearch />
+  </button>
+  <input
+    type="text"
+    value={query}
+    onChange={handleInputChange}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") handleSearch();
+    }}
+    placeholder="Pesquise por filmes, séries ou animes..."
+    className="pl-10 bg-gray-700 text-white px-4 py-2 rounded-lg placeholder-gray-400 focus:ring-2 focus:ring-red-500 outline-none w-full md:w-auto"
+  />
+  {query && ( 
+    <button
+      onClick={handleClear}
+      className="ml-2 text-gray-400 hover:text-white transition"
+    >
+      Limpar
+    </button>
+  )}
+</div>
+
           </nav>
         </div>
       </header>
