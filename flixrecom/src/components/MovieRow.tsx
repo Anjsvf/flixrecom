@@ -151,7 +151,7 @@ export default function Banner() {
   };
 
   return (
-    <div className="banner p-4 bg-gray-900">
+    <div className="banner p-4 bg-black">
       <div className="flex flex-wrap justify-between items-center mb-6">
         <div className="flex gap-4 mb-4 sm:mb-0">
           {["movie", "tv", "anime", "documentary"].map((cat) => (
