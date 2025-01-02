@@ -68,9 +68,11 @@ export default function Banner() {
           return isUpcoming ? releaseDate > currentDate : releaseDate <= currentDate;
         });
 
-        const randomContent =
-          validContent[Math.floor(Math.random() * validContent.length)];
-        setContent(randomContent || null);
+        if (validContent.length > 0) {
+          const randomContent =
+            validContent[Math.floor(Math.random() * validContent.length)];
+          setContent(randomContent);
+        }
       } catch (error) {
         console.error("Erro ao buscar conteúdo:", error);
       }
@@ -87,11 +89,17 @@ export default function Banner() {
     return () => clearInterval(interval);
   }, []);
 
-  if (!content) return null;
+  if (!content) {
+    return (
+      <div className="relative h-[300px] md:h-[500px] bg-black text-white flex items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div
-      className="relative h-[300px] md:h-[500px] bg-cover bg-center text-white"
+      className="relative h-[300px] md:h-[500px] bg-cover bg-center text-white transition-opacity duration-1000"
       style={{
         backgroundImage: content.backdrop_path
           ? `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`
@@ -103,8 +111,7 @@ export default function Banner() {
         <h2 className="text-2xl md:text-4xl font-bold text-white">
           {content.title}{" "}
           <span className="text-sm md:text-base font-light">
-            ({content.type} -{" "}
-            {isUpcoming ? "Em breve" : "Lançado recentemente"})
+            ({content.type} - {isUpcoming ? "Em breve" : "Lançado recentemente"})
           </span>
         </h2>
         <p className="text-sm md:text-base text-gray-300 mt-2 max-w-xs md:max-w-md overflow-hidden text-ellipsis line-clamp-3">
