@@ -197,29 +197,32 @@ export default function Banner() {
       {loading ? (
         <p className="text-white">Carregando...</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {content.map((item) => (
-            <div
-              key={item.id}
-              className="bg-gray-800 p-4 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105"
-              onClick={() => setSelectedItem(item)}
-            >
-              <img
-                src={
-                  item.backdrop_path
-                    ? `https://image.tmdb.org/t/p/w500${item.backdrop_path}`
-                    : "/placeholder.jpg"
-                }
-                alt={item.title || item.name || "Sem título disponível"}
-                className="w-full h-48 object-cover rounded-md"
-              />
-              <h3 className="text-white mt-2 font-bold text-sm sm:text-base">{item.title || item.name}</h3>
-              <p className="text-gray-400 text-xs sm:text-sm">
-                {new Date(item.release_date || item.first_air_date || "").getFullYear()}
-              </p>
-            </div>
-          ))}
-        </div>
+       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+  {content.map((item) => (
+    <div
+      key={item.id}
+      className="bg-gray-800 p-2 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105"
+      onClick={() => setSelectedItem(item)}
+    >
+      <img
+        src={
+          item.backdrop_path
+            ? `https://image.tmdb.org/t/p/w500${item.backdrop_path}`
+            : "/placeholder.jpg"
+        }
+        alt={item.title || item.name || "Sem título disponível"}
+        className="w-full h-auto object-cover aspect-[2/3] rounded-md"
+      />
+      <h3 className="text-white mt-2 font-bold text-sm sm:text-base">
+        {item.title || item.name}
+      </h3>
+      <p className="text-gray-400 text-xs sm:text-sm">
+        {new Date(item.release_date || item.first_air_date || "").getFullYear()}
+      </p>
+    </div>
+  ))}
+</div>
+
       )}
       {selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center overflow-y-auto z-50">
