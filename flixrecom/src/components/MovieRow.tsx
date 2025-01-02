@@ -24,7 +24,9 @@ export default function Banner() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [category, setCategory] = useState<"movie" | "tv" | "anime" | "documentary">("movie");
+  const [category, setCategory] = useState<
+    "movie" | "tv" | "anime" | "documentary"
+  >("movie");
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Content | null>(null);
 
@@ -134,13 +136,19 @@ export default function Banner() {
       name: typeof item.name === "string" ? item.name : undefined,
       backdrop_path: item.backdrop_path,
       overview: item.overview,
-      release_date: typeof item.release_date === "string" ? item.release_date : undefined,
-      first_air_date: typeof item.first_air_date === "string" ? item.first_air_date : undefined,
+      release_date:
+        typeof item.release_date === "string" ? item.release_date : undefined,
+      first_air_date:
+        typeof item.first_air_date === "string"
+          ? item.first_air_date
+          : undefined,
       likes: Math.floor(Math.random() * 1000),
     };
   };
 
-  const handleCategoryChange = (newCategory: "movie" | "tv" | "anime" | "documentary") => {
+  const handleCategoryChange = (
+    newCategory: "movie" | "tv" | "anime" | "documentary"
+  ) => {
     setCategory(newCategory);
     setSelectedGenre(null);
     setSelectedYear(null);
@@ -153,13 +161,15 @@ export default function Banner() {
   return (
     <div className="banner p-4 bg-black">
       <div className="flex flex-wrap justify-between items-center mb-6">
-        <div className="flex gap-4 mb-4 sm:mb-0">
+        <div className="flex flex-wrap gap-4 mb-4 sm:mb-6 justify-center sm:justify-start">
           {["movie", "tv", "anime", "documentary"].map((cat) => (
             <button
               key={cat}
-              className={`px-4 py-2 rounded-full text-sm ${
-                category === cat ? "bg-red-500 text-white" : "bg-gray-700 text-white"
-              }`}
+              className={`px-4 py-2 rounded-full text-sm md:text-base lg:text-lg ${
+                category === cat
+                  ? "bg-red-500 text-white"
+                  : "bg-gray-700 text-white"
+              } hover:bg-gray-600 transition-colors`}
               onClick={() => handleCategoryChange(cat as typeof category)}
             >
               {cat === "movie"
@@ -172,6 +182,7 @@ export default function Banner() {
             </button>
           ))}
         </div>
+
         <div className="flex gap-4 mb-4 sm:mb-0">
           <select
             className="bg-gray-700 text-white px-4 py-2 rounded-full text-sm"
@@ -197,32 +208,33 @@ export default function Banner() {
       {loading ? (
         <p className="text-white">Carregando...</p>
       ) : (
-       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-  {content.map((item) => (
-    <div
-      key={item.id}
-      className="bg-gray-800 p-2 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105"
-      onClick={() => setSelectedItem(item)}
-    >
-      <img
-        src={
-          item.backdrop_path
-            ? `https://image.tmdb.org/t/p/w500${item.backdrop_path}`
-            : "/placeholder.jpg"
-        }
-        alt={item.title || item.name || "Sem título disponível"}
-        className="w-full h-auto object-cover aspect-[2/3] rounded-md"
-      />
-      <h3 className="text-white mt-2 font-bold text-sm sm:text-base">
-        {item.title || item.name}
-      </h3>
-      <p className="text-gray-400 text-xs sm:text-sm">
-        {new Date(item.release_date || item.first_air_date || "").getFullYear()}
-      </p>
-    </div>
-  ))}
-</div>
-
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {content.map((item) => (
+            <div
+              key={item.id}
+              className="bg-gray-800 p-2 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105"
+              onClick={() => setSelectedItem(item)}
+            >
+              <img
+                src={
+                  item.backdrop_path
+                    ? `https://image.tmdb.org/t/p/w500${item.backdrop_path}`
+                    : "/placeholder.jpg"
+                }
+                alt={item.title || item.name || "Sem título disponível"}
+                className="w-full h-auto object-cover aspect-[2/3] rounded-md"
+              />
+              <h3 className="text-white mt-2 font-bold text-sm sm:text-base">
+                {item.title || item.name}
+              </h3>
+              <p className="text-gray-400 text-xs sm:text-sm">
+                {new Date(
+                  item.release_date || item.first_air_date || ""
+                ).getFullYear()}
+              </p>
+            </div>
+          ))}
+        </div>
       )}
       {selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center overflow-y-auto z-50">
