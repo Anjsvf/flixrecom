@@ -2,37 +2,85 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import YouTube from "react-youtube";
 
 type ApiResponseItem = {
+  id: string;
   title?: string;
   name?: string;
   overview?: string;
   backdrop_path?: string;
   release_date?: string;
   first_air_date?: string;
+  credits?: {
+    cast: { name: string }[];
+  };
 };
 
 type Content = {
+  id: string;
   title: string;
   overview: string;
   backdrop_path: string;
   release_date?: string;
   first_air_date?: string;
   type: "Filme" | "Série";
+  trailerId?: string | null;
+  cast?: string[];
 };
 
 export default function Banner() {
   const [content, setContent] = useState<Content | null>(null);
-  const [isUpcoming, setIsUpcoming] = useState(false);
+  const [isUpcoming, setIsUpcoming] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const fetchTrailer = async (id: string, type: "movie" | "tv") => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/${type}/${id}/videos`,
+        {
+          params: {
+            api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+            language: "pt-BR",
+          },
+        }
+      );
+      const trailers = response.data.results.filter(
+        (video: { type: string; site: string }) =>
+          video.type === "Trailer" && video.site === "YouTube"
+      );
+      return trailers.length > 0 ? trailers[0].key : null;
+    } catch (error) {
+      console.error("Erro ao buscar trailer:", error);
+      return null;
+    }
+  };
+
+  const fetchCredits = async (id: string, type: "movie" | "tv") => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/${type}/${id}/credits`,
+        {
+          params: {
+            api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+            language: "pt-BR",
+          },
+        }
+      );
+      return response.data.cast.map((actor: { name: string }) => actor.name);
+    } catch (error) {
+      console.error("Erro ao buscar créditos:", error);
+      return [];
+    }
+  };
 
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const endpoints = isUpcoming
-          ? ["/movie/upcoming", "/tv/on_the_air"]
-          : ["/movie/now_playing", "/tv/airing_today"];
+        const endpoints = ["/movie/upcoming", "/tv/on_the_air"];
 
-        const [moviesResponse, seriesResponse] = await Promise.all(
+        const [upcomingMovies, onTheAirSeries] = await Promise.all(
           endpoints.map((path) =>
             axios.get(`${process.env.NEXT_PUBLIC_TMDB_BASE_URL}${path}`, {
               params: {
@@ -43,8 +91,9 @@ export default function Banner() {
           )
         );
 
-        const allContent: Content[] = [
-          ...moviesResponse.data.results.map((item: ApiResponseItem) => ({
+        const upcomingContent: Content[] = [
+          ...upcomingMovies.data.results.map((item: ApiResponseItem) => ({
+            id: item.id,
             title: item.title || item.name || "Sem título",
             overview: item.overview || "Descrição não disponível.",
             backdrop_path: item.backdrop_path || "",
@@ -52,7 +101,8 @@ export default function Banner() {
             first_air_date: item.first_air_date,
             type: "Filme",
           })),
-          ...seriesResponse.data.results.map((item: ApiResponseItem) => ({
+          ...onTheAirSeries.data.results.map((item: ApiResponseItem) => ({
+            id: item.id,
             title: item.title || item.name || "Sem título",
             overview: item.overview || "Descrição não disponível.",
             backdrop_path: item.backdrop_path || "",
@@ -62,16 +112,24 @@ export default function Banner() {
           })),
         ];
 
-        const validContent = allContent.filter((item) => {
+        const validUpcomingContent = upcomingContent.filter((item) => {
           const currentDate = new Date();
           const releaseDate = new Date(item.release_date || item.first_air_date || "");
           return isUpcoming ? releaseDate > currentDate : releaseDate <= currentDate;
         });
 
-        if (validContent.length > 0) {
+        if (validUpcomingContent.length > 0) {
           const randomContent =
-            validContent[Math.floor(Math.random() * validContent.length)];
-          setContent(randomContent);
+            validUpcomingContent[Math.floor(Math.random() * validUpcomingContent.length)];
+          const trailerId = await fetchTrailer(
+            randomContent.id,
+            randomContent.type === "Filme" ? "movie" : "tv"
+          );
+          const cast = await fetchCredits(
+            randomContent.id,
+            randomContent.type === "Filme" ? "movie" : "tv"
+          );
+          setContent({ ...randomContent, trailerId, cast });
         }
       } catch (error) {
         console.error("Erro ao buscar conteúdo:", error);
@@ -83,11 +141,13 @@ export default function Banner() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsUpcoming((prev) => !prev);
-    }, 10000);
+      if (!isPaused) {
+        setIsUpcoming((prev) => !prev);
+      }
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isPaused]);
 
   if (!content) {
     return (
@@ -97,30 +157,95 @@ export default function Banner() {
     );
   }
 
+  const currentDate = new Date();
+  const releaseDate = new Date(content.release_date || content.first_air_date || "");
+  const isUpcomingContent = releaseDate > currentDate;
+
   return (
-    <div
-      className="relative h-[300px] md:h-[500px] bg-cover bg-center text-white transition-opacity duration-1000"
-      style={{
-        backgroundImage: content.backdrop_path
-          ? `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`
-          : "url(/placeholder.jpg)",
-      }}
-    >
-      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-      <div className="absolute bottom-5 left-5 p-4 md:bottom-10 md:left-10 lg:left-20 lg:bottom-20">
-        <h2 className="text-2xl md:text-4xl font-bold text-white">
-          {content.title}{" "}
-          <span className="text-sm md:text-base font-light">
-            ({content.type} - {isUpcoming ? "Em breve" : "Lançado recentemente"})
-          </span>
-        </h2>
-        <p className="text-sm md:text-base text-gray-300 mt-2 max-w-xs md:max-w-md overflow-hidden text-ellipsis line-clamp-3">
-          {content.overview}
-        </p>
-        <button className="mt-4 px-4 py-2 md:px-6 md:py-3 bg-red-600 rounded hover:bg-red-700 transition-all duration-300 ease-in-out">
-          {isUpcoming ? "EM BREVE" : "LANÇADO RECENTEMENTE"}
-        </button>
+    <div className="mt-[64px]"> {/* Ajuste a margem superior conforme a altura do header */}
+      <div
+        className="relative h-[300px] md:h-[500px] bg-cover bg-center text-white transition-opacity duration-1000"
+        style={{
+          backgroundImage: content.backdrop_path
+            ? `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`
+            : "url(/placeholder.jpg)",
+        }}
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+        <div className="absolute bottom-5 left-5 p-4 md:bottom-10 md:left-10 lg:left-20 lg:bottom-20">
+          <h2 className="text-2xl md:text-4xl font-bold text-white">
+            {content.title}{" "}
+            <span className="text-sm md:text-base font-light">
+              ({content.type} - {isUpcomingContent ? "Em breve" : "Lançado recentemente"})
+            </span>
+          </h2>
+          <p className="text-sm md:text-base text-gray-300 mt-2 max-w-xs md:max-w-md overflow-hidden text-ellipsis line-clamp-3">
+            {content.overview}
+          </p>
+          <button
+            className="mt-4 px-4 py-2 md:px-6 md:py-3 bg-red-600 rounded hover:bg-red-700 transition-all duration-300 ease-in-out"
+            onClick={() => {
+              setIsPaused(true);
+              setShowModal(true);
+            }}
+          >
+            Detalhes
+          </button>
+        </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+          <div className="bg-gray-900 p-4 rounded-md max-w-4xl w-full mx-4 relative overflow-hidden flex flex-col md:flex-row md:gap-6 max-h-screen">
+            <button
+              className="absolute top-3 right-3 text-white bg-red-500 px-3 py-1 text-sm rounded"
+              onClick={() => {
+                setIsPaused(false);
+                setShowModal(false);
+              }}
+            >
+              Fechar
+            </button>
+            <div className="flex-1 overflow-y-auto">
+              <h2 className="text-xl font-bold text-white mb-3">
+                {content.title}
+              </h2>
+              <p className="text-gray-400 text-sm italic mb-2">
+                Tipo: {content.type}
+              </p>
+              <img
+                src={
+                  content.backdrop_path
+                    ? `https://image.tmdb.org/t/p/w500${content.backdrop_path}`
+                    : "/placeholder.jpg"
+                }
+                alt={content.title}
+                className="w-full h-32 object-cover rounded mb-3"
+              />
+              <p className="mb-3 text-gray-300 text-sm">{content.overview}</p>
+              <p className="text-gray-300 text-sm">
+                Ano de Lançamento:{" "}
+                {new Date(
+                  content.release_date || content.first_air_date || ""
+                ).getFullYear()}
+              </p>
+              <p className="text-gray-300 text-sm">
+                Principais Artistas: {content.cast?.join(", ")}
+              </p>
+            </div>
+            <div className="flex-1 mt-4 md:mt-0">
+              {content.trailerId ? (
+                <YouTube
+                  videoId={content.trailerId}
+                  opts={{ width: "100%", height: "390" }}
+                />
+              ) : (
+                <p className="text-gray-400">Trailer não disponível.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
