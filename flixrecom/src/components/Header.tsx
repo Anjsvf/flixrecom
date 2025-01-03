@@ -260,91 +260,91 @@ export default function Header() {
         </div>
       )}
 
-      {selectedMovie && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center overflow-y-auto z-50">
-          <div className="bg-gray-900 p-4 rounded-md max-w-4xl mx-auto relative overflow-y-auto flex flex-col md:flex-row md:gap-6">
-            <button
-              className="absolute top-3 right-3 text-white bg-red-500 px-3 py-1 text-sm rounded"
-              onClick={() => setSelectedMovie(null)}
-            >
-              Fechar
-            </button>
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-white mb-3">
-                {selectedMovie.title || selectedMovie.name}
-              </h2>
-              <p className="text-gray-400 text-sm italic mb-2">
-                Tipo: {selectedMovie.first_air_date ? "Série" : "Filme"}
-              </p>
-              <img
-                src={
-                  selectedMovie.backdrop_path
-                    ? `https://image.tmdb.org/t/p/w500${selectedMovie.backdrop_path}`
-                    : "/placeholder.jpg"
-                }
-                alt={selectedMovie.title || selectedMovie.name}
-                className="w-full h-32 object-cover rounded mb-3"
-              />
-              <p className="mb-3 text-gray-300 text-sm">
-                {selectedMovie.overview}
-              </p>
-              <p className="text-gray-300 text-sm">
-                Ano de Lançamento:{" "}
-                {new Date(
-                  selectedMovie.release_date ||
-                    selectedMovie.first_air_date ||
-                    ""
-                ).getFullYear()}
-              </p>
-              <p className="text-gray-300 text-sm">
-                País:{" "}
-                {selectedMovie.production_countries
-                  ?.map((country) => country.name)
-                  .join(", ")}
-              </p>
-              <div className="flex items-center mt-2">
-                <p className="text-gray-300 text-sm mr-1">Classificação:</p>
-                {Array.from({ length: 5 }, (_, i) => (
-                  <FaStar
-                    key={i}
-                    className={`text-yellow-500 text-xs ${
-                      i < Math.round((selectedMovie.vote_average || 0) / 2)
-                        ? ""
-                        : "opacity-25"
-                    }`}
-                  />
-                ))}
-                <p className="text-gray-300 text-sm ml-1">
-                  ({selectedMovie.vote_count} votos)
-                </p>
-              </div>
-              <p className="text-gray-300 text-sm mt-2">
-                Gêneros:{" "}
-                {selectedMovie.genres?.map((genre) => genre.name).join(", ")}
-              </p>
-              <p className="text-gray-300 text-sm mt-2">
-                Principais Atores:{" "}
-                {selectedMovie.credits?.cast
-                  .slice(0, 3)
-                  .map((actor) => actor.name)
-                  .join(", ")}
-              </p>
-            </div>
+{selectedMovie && (
+  <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+    <div className="bg-gray-900 p-4 rounded-md max-w-4xl w-full mx-4 relative overflow-hidden flex flex-col md:flex-row md:gap-6 max-h-screen">
+      {/* Botão de fechar */}
+      <button
+        className="fixed top-3 right-3 text-white bg-red-500 px-3 py-1 text-sm rounded z-50"
+        onClick={() => setSelectedMovie(null)}
+      >
+        Fechar
+      </button>
 
-            {/* Trailer */}
-            <div className="flex-1 mt-4 md:mt-0">
-              {trailerId && (
-                <div className="w-full">
-                  <YouTube
-                    videoId={trailerId}
-                    opts={{ width: "100%", height: "390" }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Conteúdo */}
+      <div className="flex-1 overflow-y-auto">
+        <h2 className="text-xl font-bold text-white mb-3">
+          {selectedMovie.title || selectedMovie.name}
+        </h2>
+        <p className="text-gray-400 text-sm italic mb-2">
+          Tipo: {selectedMovie.first_air_date ? "Série" : "Filme"}
+        </p>
+        <img
+          src={
+            selectedMovie.backdrop_path
+              ? `https://image.tmdb.org/t/p/w500${selectedMovie.backdrop_path}`
+              : "/placeholder.jpg"
+          }
+          alt={selectedMovie.title || selectedMovie.name}
+          className="w-full h-32 object-cover rounded mb-3"
+        />
+        <p className="mb-3 text-gray-300 text-sm">{selectedMovie.overview}</p>
+        <p className="text-gray-300 text-sm">
+          Ano de Lançamento:{" "}
+          {new Date(
+            selectedMovie.release_date || selectedMovie.first_air_date || ""
+          ).getFullYear()}
+        </p>
+        <p className="text-gray-300 text-sm">
+          País:{" "}
+          {selectedMovie.production_countries
+            ?.map((country) => country.name)
+            .join(", ")}
+        </p>
+        <div className="flex items-center mt-2">
+          <p className="text-gray-300 text-sm mr-1">Classificação:</p>
+          {Array.from({ length: 5 }, (_, i) => (
+            <FaStar
+              key={i}
+              className={`text-yellow-500 text-xs ${
+                i < Math.round((selectedMovie.vote_average || 0) / 2)
+                  ? ""
+                  : "opacity-25"
+              }`}
+            />
+          ))}
+          <p className="text-gray-300 text-sm ml-1">
+            ({selectedMovie.vote_count} votos)
+          </p>
         </div>
-      )}
+        <p className="text-gray-300 text-sm mt-2">
+          Gêneros:{" "}
+          {selectedMovie.genres?.map((genre) => genre.name).join(", ")}
+        </p>
+        <p className="text-gray-300 text-sm mt-2">
+          Principais Atores:{" "}
+          {selectedMovie.credits?.cast
+            .slice(0, 3)
+            .map((actor) => actor.name)
+            .join(", ")}
+        </p>
+      </div>
+
+      {/* Trailer */}
+      <div className="flex-1 mt-4 md:mt-0">
+        {trailerId && (
+          <div className="w-full">
+            <YouTube
+              videoId={trailerId}
+              opts={{ width: "100%", height: "390" }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
     </>
   );
 }
