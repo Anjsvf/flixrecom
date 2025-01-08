@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import YouTube from "react-youtube";
-import { FaSearch, FaStar, FaPlay } from "react-icons/fa";
+import { FaSearch, FaStar } from "react-icons/fa";
 
 interface WatchProvider {
   provider_id: number;
