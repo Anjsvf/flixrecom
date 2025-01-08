@@ -24,9 +24,7 @@ export default function Banner() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [category, setCategory] = useState<
-    "movie" | "tv" | "anime" | "documentary"
-  >("movie");
+  const [category, setCategory] = useState<"movie" | "tv" | "anime" | "documentary">("movie");
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Content | null>(null);
 

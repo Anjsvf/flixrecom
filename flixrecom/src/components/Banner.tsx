@@ -15,6 +15,7 @@ type ApiResponseItem = {
   credits?: {
     cast: { name: string }[];
   };
+  seasons?: { air_date: string; season_number: number }[];
 };
 
 type Content = {
@@ -27,6 +28,8 @@ type Content = {
   type: "Filme" | "Série";
   trailerId?: string | null;
   cast?: string[];
+  latestSeason?: { air_date: string; season_number: number };
+  newEpisodes?: boolean;
 };
 
 export default function Banner() {
@@ -68,10 +71,32 @@ export default function Banner() {
           },
         }
       );
-      return response.data.cast.map((actor: { name: string }) => actor.name);
+      return response.data.cast.slice(0, 5).map((actor: { name: string }) => actor.name);
     } catch (error) {
       console.error("Erro ao buscar créditos:", error);
       return [];
+    }
+  };
+
+  const fetchLatestSeason = async (id: string) => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/tv/${id}`,
+        {
+          params: {
+            api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+            language: "pt-BR",
+          },
+        }
+      );
+      const seasons = response.data.seasons;
+      const latestSeason = seasons[seasons.length - 1];
+      const currentYear = new Date().getFullYear();
+      const newEpisodes = new Date(latestSeason.air_date).getFullYear() === currentYear;
+      return { latestSeason, newEpisodes };
+    } catch (error) {
+      console.error("Erro ao buscar temporada:", error);
+      return null;
     }
   };
 
@@ -129,7 +154,14 @@ export default function Banner() {
             randomContent.id,
             randomContent.type === "Filme" ? "movie" : "tv"
           );
-          setContent({ ...randomContent, trailerId, cast });
+          let latestSeason = null;
+          let newEpisodes = false;
+          if (randomContent.type === "Série") {
+            const seasonData = await fetchLatestSeason(randomContent.id);
+            latestSeason = seasonData?.latestSeason;
+            newEpisodes = seasonData?.newEpisodes || false;
+          }
+          setContent({ ...randomContent, trailerId, cast, latestSeason, newEpisodes });
         }
       } catch (error) {
         console.error("Erro ao buscar conteúdo:", error);
@@ -182,6 +214,16 @@ export default function Banner() {
           <p className="text-sm md:text-base text-gray-300 mt-2 max-w-xs md:max-w-md overflow-hidden text-ellipsis line-clamp-3">
             {content.overview}
           </p>
+          {content.type === "Série" && content.latestSeason && (
+            <p className="text-sm md:text-base text-gray-300 mt-2">
+              Nova Temporada: {content.latestSeason.season_number} (Lançada em {new Date(content.latestSeason.air_date).getFullYear()})
+            </p>
+          )}
+          {content.type === "Série" && content.newEpisodes && (
+            <p className="text-sm md:text-base text-gray-300 mt-2">
+              Novos Episódios Disponíveis
+            </p>
+          )}
           <button
             className="mt-4 px-4 py-2 md:px-6 md:py-3 bg-red-600 rounded hover:bg-red-700 transition-all duration-300 ease-in-out"
             onClick={() => {
@@ -232,6 +274,16 @@ export default function Banner() {
               <p className="text-gray-300 text-sm">
                 Principais Artistas: {content.cast?.join(", ")}
               </p>
+              {content.type === "Série" && content.latestSeason && (
+                <p className="text-gray-300 text-sm">
+                  Nova Temporada: {content.latestSeason.season_number} (Lançada em {new Date(content.latestSeason.air_date).getFullYear()})
+                </p>
+              )}
+              {content.type === "Série" && content.newEpisodes && (
+                <p className="text-gray-300 text-sm">
+                  Novos Episódios Disponíveis
+                </p>
+              )}
             </div>
             <div className="flex-1 mt-4 md:mt-0">
               {content.trailerId ? (
