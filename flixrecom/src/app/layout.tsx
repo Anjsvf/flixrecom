@@ -15,8 +15,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Flixrecom",
-  description: " A movie recommendation app", 
+  description: "A movie recommendation app",
+  keywords: "movie recommendations, Flixrecom, best movies, movie reviews , recomendações de filmes, Flixrecom, melhores filmes, críticas de filmes", 
 };
+
 
 export default function RootLayout({
   children,
