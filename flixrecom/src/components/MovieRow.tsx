@@ -20,6 +20,12 @@ interface Genre {
   name: string;
 }
 
+interface Video {
+  type: string;
+  site: string;
+  key: string;
+}
+
 export default function Banner() {
   const [content, setContent] = useState<Content[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -67,7 +73,7 @@ export default function Banner() {
       });
 
       const trailer = response.data.results.find(
-        (video: any) => video.type === "Trailer" && video.site === "YouTube"
+        (video: Video) => video.type === "Trailer" && video.site === "YouTube"
       );
       return trailer ? trailer.key : null;
     } catch (error) {

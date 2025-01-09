@@ -59,7 +59,7 @@ export default function Header() {
       );
       const video = response.data.items[0];
       setTrailerId(video.id.videoId);
-    } catch (error) {
+    } catch (erro) {
       setErrorMessage("Erro ao buscar trailer no YouTube.");
      
     }
