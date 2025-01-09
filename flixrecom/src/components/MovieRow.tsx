@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import MovieDetailsModal from "./MovieDetailsModal";
 
 interface Content {
   id: number;
@@ -27,6 +28,7 @@ export default function Banner() {
   const [category, setCategory] = useState<"movie" | "tv" | "anime" | "documentary">("movie");
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Content | null>(null);
+  const [trailerId, setTrailerId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGenres = async () => {
@@ -55,6 +57,57 @@ export default function Banner() {
 
     fetchGenres();
   }, [category]);
+
+  const fetchTrailer = async (itemId: number) => {
+    try {
+      const mediaType = category === "tv" || category === "anime" ? "tv" : "movie";
+      const url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/${mediaType}/${itemId}/videos`;
+      const response = await axios.get(url, {
+        params: { api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY },
+      });
+
+      const trailer = response.data.results.find(
+        (video: any) => video.type === "Trailer" && video.site === "YouTube"
+      );
+      return trailer ? trailer.key : null;
+    } catch (error) {
+      console.error("Erro ao buscar trailer:", error);
+      return null;
+    }
+  };
+
+  const fetchWatchProviders = async (itemId: number) => {
+    try {
+      const mediaType = category === "tv" || category === "anime" ? "tv" : "movie";
+      const url = `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/${mediaType}/${itemId}/watch/providers`;
+      const response = await axios.get(url, {
+        params: { api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar provedores:", error);
+      return null;
+    }
+  };
+
+  const handleItemClick = async (item: Content) => {
+    try {
+      const [newTrailerId, watchProvidersData] = await Promise.all([
+        fetchTrailer(item.id),
+        fetchWatchProviders(item.id)
+      ]);
+      
+      setSelectedItem({
+        ...item,
+        "watch/providers": watchProvidersData
+      } as Content);
+      setTrailerId(newTrailerId);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      setSelectedItem(item);
+      setTrailerId(null);
+    }
+  };
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -137,9 +190,7 @@ export default function Banner() {
       release_date:
         typeof item.release_date === "string" ? item.release_date : undefined,
       first_air_date:
-        typeof item.first_air_date === "string"
-          ? item.first_air_date
-          : undefined,
+        typeof item.first_air_date === "string" ? item.first_air_date : undefined,
       likes: Math.floor(Math.random() * 1000),
     };
   };
@@ -154,6 +205,7 @@ export default function Banner() {
 
   const closeModal = () => {
     setSelectedItem(null);
+    setTrailerId(null);
   };
 
   return (
@@ -211,7 +263,7 @@ export default function Banner() {
             <div
               key={item.id}
               className="bg-gray-800 p-2 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105"
-              onClick={() => setSelectedItem(item)}
+              onClick={() => handleItemClick(item)}
             >
               <img
                 src={
@@ -235,35 +287,11 @@ export default function Banner() {
         </div>
       )}
       {selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center overflow-y-auto z-50">
-          <div className="bg-gray-900 p-4 rounded-md max-w-md mx-auto relative overflow-y-auto">
-            <button
-              className="absolute top-3 right-3 text-white bg-red-500 px-3 py-1 text-sm rounded-full"
-              onClick={closeModal}
-            >
-              Fechar
-            </button>
-            <h2 className="text-xl font-bold text-white mb-3">
-              {selectedItem.title || selectedItem.name}
-            </h2>
-            <p className="text-gray-400 text-sm italic mb-2">
-              Tipo: {selectedItem.first_air_date ? "Série" : "Filme"}
-            </p>
-            <img
-              src={
-                selectedItem.backdrop_path
-                  ? `https://image.tmdb.org/t/p/w500${selectedItem.backdrop_path}`
-                  : "/placeholder.jpg"
-              }
-              alt={selectedItem.title || selectedItem.name}
-              className="w-full h-32 object-cover rounded mb-3"
-            />
-            <p className="text-gray-300">{selectedItem.overview}</p>
-            <p className="mt-4 text-gray-400 text-sm">
-              Relevante para: {selectedItem.likes} pessoas.
-            </p>
-          </div>
-        </div>
+        <MovieDetailsModal
+          movie={selectedItem}
+          trailerId={trailerId}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

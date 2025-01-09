@@ -12,6 +12,16 @@ type ApiResponseItem = {
   backdrop_path?: string;
   release_date?: string;
   first_air_date?: string;
+  media_type?: string;
+  watch_providers?: {
+    results: {
+      BR?: {
+        flatrate?: { provider_name: string }[];
+        free?: { provider_name: string }[];
+        ads?: { provider_name: string }[];
+      };
+    };
+  };
   credits?: {
     cast: { name: string }[];
   };
@@ -25,11 +35,12 @@ type Content = {
   backdrop_path: string;
   release_date?: string;
   first_air_date?: string;
-  type: "Filme" | "Série";
+  type: "Filme" | "Série" | "Documentário";
   trailerId?: string | null;
   cast?: string[];
   latestSeason?: { air_date: string; season_number: number };
   newEpisodes?: boolean;
+  streamingPlatforms?: string[];
 };
 
 export default function Banner() {
@@ -37,6 +48,32 @@ export default function Banner() {
   const [isUpcoming, setIsUpcoming] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+
+  const fetchWatchProviders = async (id: string, type: "movie" | "tv") => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/${type}/${id}/watch/providers`,
+        {
+          params: {
+            api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+          },
+        }
+      );
+      const providers = response.data.results.BR;
+      if (!providers) return [];
+      
+      const allProviders = [
+        ...(providers.flatrate || []),
+        ...(providers.free || []),
+        ...(providers.ads || []),
+      ];
+      
+      return [...new Set(allProviders.map(provider => provider.provider_name))];
+    } catch (error) {
+      console.error("Erro ao buscar provedores:", error);
+      return [];
+    }
+  };
 
   const fetchTrailer = async (id: string, type: "movie" | "tv") => {
     try {
@@ -103,9 +140,14 @@ export default function Banner() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const endpoints = ["/movie/upcoming", "/tv/on_the_air"];
+        const endpoints = [
+          "/movie/upcoming",
+          "/tv/on_the_air",
+          "/discover/movie?with_genres=99", // Documentários
+          "/tv/popular" // Séries populares para checar novos episódios
+        ];
 
-        const [upcomingMovies, onTheAirSeries] = await Promise.all(
+        const responses = await Promise.all(
           endpoints.map((path) =>
             axios.get(`${process.env.NEXT_PUBLIC_TMDB_BASE_URL}${path}`, {
               params: {
@@ -116,7 +158,9 @@ export default function Banner() {
           )
         );
 
-        const upcomingContent: Content[] = [
+        const [upcomingMovies, onTheAirSeries, documentaries, popularSeries] = responses;
+
+        const allContent: Content[] = [
           ...upcomingMovies.data.results.map((item: ApiResponseItem) => ({
             id: item.id,
             title: item.title || item.name || "Sem título",
@@ -135,25 +179,47 @@ export default function Banner() {
             first_air_date: item.first_air_date,
             type: "Série",
           })),
+          ...documentaries.data.results.map((item: ApiResponseItem) => ({
+            id: item.id,
+            title: item.title || item.name || "Sem título",
+            overview: item.overview || "Descrição não disponível.",
+            backdrop_path: item.backdrop_path || "",
+            release_date: item.release_date,
+            first_air_date: item.first_air_date,
+            type: "Documentário",
+          })),
+          ...popularSeries.data.results.map((item: ApiResponseItem) => ({
+            id: item.id,
+            title: item.title || item.name || "Sem título",
+            overview: item.overview || "Descrição não disponível.",
+            backdrop_path: item.backdrop_path || "",
+            release_date: item.release_date,
+            first_air_date: item.first_air_date,
+            type: "Série",
+          }))
         ];
 
-        const validUpcomingContent = upcomingContent.filter((item) => {
+        const validContent = allContent.filter((item) => {
           const currentDate = new Date();
           const releaseDate = new Date(item.release_date || item.first_air_date || "");
-          return isUpcoming ? releaseDate > currentDate : releaseDate <= currentDate;
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(currentDate.getDate() - 30);
+          return isUpcoming ? releaseDate > currentDate : releaseDate >= thirtyDaysAgo && releaseDate <= currentDate;
         });
 
-        if (validUpcomingContent.length > 0) {
+        if (validContent.length > 0) {
           const randomContent =
-            validUpcomingContent[Math.floor(Math.random() * validUpcomingContent.length)];
-          const trailerId = await fetchTrailer(
-            randomContent.id,
-            randomContent.type === "Filme" ? "movie" : "tv"
-          );
-          const cast = await fetchCredits(
-            randomContent.id,
-            randomContent.type === "Filme" ? "movie" : "tv"
-          );
+            validContent[Math.floor(Math.random() * validContent.length)];
+          
+          const contentType = randomContent.type === "Documentário" ? "movie" : 
+                            randomContent.type === "Filme" ? "movie" : "tv";
+          
+          const [trailerId, cast, streamingPlatforms] = await Promise.all([
+            fetchTrailer(randomContent.id, contentType),
+            fetchCredits(randomContent.id, contentType),
+            fetchWatchProviders(randomContent.id, contentType)
+          ]);
+
           let latestSeason = null;
           let newEpisodes = false;
           if (randomContent.type === "Série") {
@@ -161,7 +227,15 @@ export default function Banner() {
             latestSeason = seasonData?.latestSeason;
             newEpisodes = seasonData?.newEpisodes || false;
           }
-          setContent({ ...randomContent, trailerId, cast, latestSeason, newEpisodes });
+
+          setContent({
+            ...randomContent,
+            trailerId,
+            cast,
+            latestSeason,
+            newEpisodes,
+            streamingPlatforms
+          });
         }
       } catch (error) {
         console.error("Erro ao buscar conteúdo:", error);
@@ -194,7 +268,7 @@ export default function Banner() {
   const isUpcomingContent = releaseDate > currentDate;
 
   return (
-    <div className="mt-[64px]"> {/* Ajuste a margem superior conforme a altura do header */}
+    <div className="mt-[64px]">
       <div
         className="relative h-[300px] md:h-[500px] bg-cover bg-center text-white transition-opacity duration-1000"
         style={{
@@ -222,6 +296,11 @@ export default function Banner() {
           {content.type === "Série" && content.newEpisodes && (
             <p className="text-sm md:text-base text-gray-300 mt-2">
               Novos Episódios Disponíveis
+            </p>
+          )}
+          {content.streamingPlatforms && content.streamingPlatforms.length > 0 && (
+            <p className="text-sm md:text-base text-green-400 mt-2">
+              Disponível em: {content.streamingPlatforms.join(", ")}
             </p>
           )}
           <button
@@ -274,6 +353,11 @@ export default function Banner() {
               <p className="text-gray-300 text-sm">
                 Principais Artistas: {content.cast?.join(", ")}
               </p>
+              {content.streamingPlatforms && content.streamingPlatforms.length > 0 && (
+                <p className="text-green-400 text-sm mt-2">
+                  Disponível em: {content.streamingPlatforms.join(", ")}
+                </p>
+              )}
               {content.type === "Série" && content.latestSeason && (
                 <p className="text-gray-300 text-sm">
                   Nova Temporada: {content.latestSeason.season_number} (Lançada em {new Date(content.latestSeason.air_date).getFullYear()})

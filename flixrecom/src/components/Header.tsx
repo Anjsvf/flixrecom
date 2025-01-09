@@ -61,7 +61,7 @@ export default function Header() {
       setTrailerId(video.id.videoId);
     } catch (error) {
       setErrorMessage("Erro ao buscar trailer no YouTube.");
-      console.error("Erro ao buscar trailer no YouTube:", error);
+     
     }
   };
 
@@ -449,3 +449,5 @@ export default function Header() {
     </>
   );
 }
+
+
