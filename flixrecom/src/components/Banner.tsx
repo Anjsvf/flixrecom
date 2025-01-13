@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import YouTube from "react-youtube";
+import LoadingSpinner from './LoadingSpinner'
 
 type ApiResponseItem = {
   id: string;
@@ -143,8 +144,8 @@ export default function Banner() {
         const endpoints = [
           "/movie/upcoming",
           "/tv/on_the_air",
-          "/discover/movie?with_genres=99", // Documentários
-          "/tv/popular" // Séries populares para checar novos episódios
+          "/discover/movie?with_genres=99", 
+          "/tv/popular" 
         ];
 
         const responses = await Promise.all(
@@ -258,8 +259,8 @@ export default function Banner() {
   if (!content) {
     return (
       <div className="relative h-[300px] md:h-[500px] bg-black text-white flex items-center justify-center">
-        <p>Carregando...</p>
-      </div>
+      <LoadingSpinner />
+    </div>
     );
   }
 

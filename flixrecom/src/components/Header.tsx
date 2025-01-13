@@ -59,9 +59,8 @@ export default function Header() {
       );
       const video = response.data.items[0];
       setTrailerId(video.id.videoId);
-    } catch  {
+    } catch {
       setErrorMessage("Erro ao buscar trailer no YouTube.");
-     
     }
   };
 
@@ -72,6 +71,7 @@ export default function Header() {
     }
 
     setErrorMessage("");
+    setSuggestions([]); // Limpa as sugestões ao realizar a pesquisa
 
     if (
       !process.env.NEXT_PUBLIC_TMDB_API_KEY ||
@@ -81,26 +81,109 @@ export default function Header() {
       return;
     }
 
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
-        {
-          params: {
-            api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-            language: "pt-BR",
-            query,
-            include_adult: false,
-          },
+   
+    const match = query.match(
+      /filmes que (?:vão|vai) chegar em (\w+) de (\d{4})/i
+    );
+    if (match) {
+      const month = match[1];
+      const year = match[2];
+      const monthNumber =
+        new Date(Date.parse(month + " 1, 2021")).getMonth() + 1;
+
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/movie`,
+          {
+            params: {
+              api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+              language: "pt-BR",
+              primary_release_date_gte: `${year}-${monthNumber
+                .toString()
+                .padStart(2, "0")}-01`,
+              primary_release_date_lte: `${year}-${monthNumber
+                .toString()
+                .padStart(2, "0")}-31`,
+            },
+          }
+        );
+
+        if (response.data.results.length === 0) {
+          setErrorMessage("Nenhum resultado encontrado.");
         }
-      );
 
-      if (response.data.results.length === 0) {
-        setErrorMessage("Nenhum resultado encontrado.");
+        setSearchResults(response.data.results);
+      } catch {
+        setErrorMessage("Erro ao buscar resultados. Tente novamente.");
       }
+    } else {
+      // Verifica se a consulta contém "filmes com [ator]"
+      const actorMatch = query.match(/filmes com (.+)/i);
+      if (actorMatch) {
+        const actorName = actorMatch[1];
 
-      setSearchResults(response.data.results);
-    } catch {
-      setErrorMessage("Erro ao buscar resultados. Tente novamente.");
+        try {
+          const actorResponse = await axios.get(
+            `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/person`,
+            {
+              params: {
+                api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+                language: "pt-BR",
+                query: actorName,
+              },
+            }
+          );
+
+          if (actorResponse.data.results.length === 0) {
+            setErrorMessage("Nenhum ator encontrado.");
+            return;
+          }
+
+          const actorId = actorResponse.data.results[0].id;
+
+          const movieResponse = await axios.get(
+            `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/movie`,
+            {
+              params: {
+                api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+                language: "pt-BR",
+                with_cast: actorId,
+              },
+            }
+          );
+
+          if (movieResponse.data.results.length === 0) {
+            setErrorMessage("Nenhum filme encontrado para este ator.");
+          }
+
+          setSearchResults(movieResponse.data.results);
+        } catch {
+          setErrorMessage("Erro ao buscar resultados. Tente novamente.");
+        }
+      } else {
+        // Se não for uma consulta de lançamento ou ator, busca normalmente
+        try {
+          const response = await axios.get(
+            `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
+            {
+              params: {
+                api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+                language: "pt-BR",
+                query,
+                include_adult: false,
+              },
+            }
+          );
+
+          if (response.data.results.length === 0) {
+            setErrorMessage("Nenhum resultado encontrado.");
+          }
+
+          setSearchResults(response.data.results);
+        } catch {
+          setErrorMessage("Erro ao buscar resultados. Tente novamente.");
+        }
+      }
     }
   };
 
@@ -226,7 +309,7 @@ export default function Header() {
     <>
       <header className="fixed w-full top-0 left-0 bg-black bg-opacity-80 z-40">
         <div className="container mx-auto flex justify-between items-center px-4 py-3">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-red-600 text-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-red-600 text-center flixrecom-style">
             flixrecom
           </h1>
 
@@ -449,5 +532,3 @@ export default function Header() {
     </>
   );
 }
-
-

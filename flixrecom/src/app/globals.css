@@ -21,3 +21,9 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   padding: 1rem; margin: 0 auto; max-width: 100%;
 }
+
+.flixrecom-style{
+  transform: skewX(-10deg);
+  display: inline-block;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
