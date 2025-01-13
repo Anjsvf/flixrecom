@@ -1,47 +1,14 @@
 import { useState } from "react";
 import axios from "axios";
 import YouTube from "react-youtube";
-import { FaSearch, FaStar } from "react-icons/fa";
-
-interface WatchProvider {
-  provider_id: number;
-  provider_name: string;
-  logo_path: string;
-}
-
-interface WatchProviders {
-  flatrate?: WatchProvider[];
-  rent?: WatchProvider[];
-  buy?: WatchProvider[];
-}
-
-interface Movie {
-  id: number;
-  title?: string;
-  name?: string;
-  poster_path?: string | null;
-  backdrop_path?: string | null;
-  overview?: string;
-  release_date?: string;
-  first_air_date?: string;
-  vote_average?: number;
-  vote_count?: number;
-  genres?: { id: number; name: string }[];
-  credits?: { cast: { id: number; name: string }[] };
-  production_countries?: { name: string }[];
-  watchProviders?: {
-    results: {
-      BR?: WatchProviders;
-    };
-  };
-}
+import { FaStar } from "react-icons/fa";
+import SearchComponent from "./SearchComponent";
+import { Movie, WatchProviders } from "./Types";
 
 export default function Header() {
-  const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [suggestions, setSuggestions] = useState<Movie[]>([]);
   const [trailerId, setTrailerId] = useState<string | null>(null);
 
   const fetchTrailer = async (movieTitle: string) => {
@@ -62,163 +29,6 @@ export default function Header() {
     } catch {
       setErrorMessage("Erro ao buscar trailer no YouTube.");
     }
-  };
-
-  const handleSearch = async () => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    setErrorMessage("");
-    setSuggestions([]); // Limpa as sugestões ao realizar a pesquisa
-
-    if (
-      !process.env.NEXT_PUBLIC_TMDB_API_KEY ||
-      !process.env.NEXT_PUBLIC_TMDB_BASE_URL
-    ) {
-      setErrorMessage("Configuração da API inválida.");
-      return;
-    }
-
-   
-    const match = query.match(
-      /filmes que (?:vão|vai) chegar em (\w+) de (\d{4})/i
-    );
-    if (match) {
-      const month = match[1];
-      const year = match[2];
-      const monthNumber =
-        new Date(Date.parse(month + " 1, 2021")).getMonth() + 1;
-
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/movie`,
-          {
-            params: {
-              api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-              language: "pt-BR",
-              primary_release_date_gte: `${year}-${monthNumber
-                .toString()
-                .padStart(2, "0")}-01`,
-              primary_release_date_lte: `${year}-${monthNumber
-                .toString()
-                .padStart(2, "0")}-31`,
-            },
-          }
-        );
-
-        if (response.data.results.length === 0) {
-          setErrorMessage("Nenhum resultado encontrado.");
-        }
-
-        setSearchResults(response.data.results);
-      } catch {
-        setErrorMessage("Erro ao buscar resultados. Tente novamente.");
-      }
-    } else {
-      // Verifica se a consulta contém "filmes com [ator]"
-      const actorMatch = query.match(/filmes com (.+)/i);
-      if (actorMatch) {
-        const actorName = actorMatch[1];
-
-        try {
-          const actorResponse = await axios.get(
-            `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/person`,
-            {
-              params: {
-                api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-                language: "pt-BR",
-                query: actorName,
-              },
-            }
-          );
-
-          if (actorResponse.data.results.length === 0) {
-            setErrorMessage("Nenhum ator encontrado.");
-            return;
-          }
-
-          const actorId = actorResponse.data.results[0].id;
-
-          const movieResponse = await axios.get(
-            `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/movie`,
-            {
-              params: {
-                api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-                language: "pt-BR",
-                with_cast: actorId,
-              },
-            }
-          );
-
-          if (movieResponse.data.results.length === 0) {
-            setErrorMessage("Nenhum filme encontrado para este ator.");
-          }
-
-          setSearchResults(movieResponse.data.results);
-        } catch {
-          setErrorMessage("Erro ao buscar resultados. Tente novamente.");
-        }
-      } else {
-        // Se não for uma consulta de lançamento ou ator, busca normalmente
-        try {
-          const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
-            {
-              params: {
-                api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-                language: "pt-BR",
-                query,
-                include_adult: false,
-              },
-            }
-          );
-
-          if (response.data.results.length === 0) {
-            setErrorMessage("Nenhum resultado encontrado.");
-          }
-
-          setSearchResults(response.data.results);
-        } catch {
-          setErrorMessage("Erro ao buscar resultados. Tente novamente.");
-        }
-      }
-    }
-  };
-
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setQuery(value);
-
-    if (!value.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/search/multi`,
-        {
-          params: {
-            api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-            language: "pt-BR",
-            query: value,
-            include_adult: false,
-          },
-        }
-      );
-      setSuggestions(response.data.results);
-    } catch {
-      setErrorMessage("Erro ao buscar sugestões.");
-    }
-  };
-
-  const handleClear = () => {
-    setQuery("");
-    setSearchResults([]);
-    setSuggestions([]);
-    setErrorMessage("");
   };
 
   const fetchMovieDetails = async (movieId: number, isTv: boolean) => {
@@ -312,35 +122,11 @@ export default function Header() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-red-600 text-center flixrecom-style">
             flixrecom
           </h1>
-
           <nav className="flex gap-4 items-center text-gray-300">
-            <div className="relative flex items-center w-full md:w-auto">
-              <button
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition"
-                onClick={handleSearch}
-              >
-                <FaSearch />
-              </button>
-              <input
-                type="text"
-                value={query}
-                onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSearch();
-                }}
-                placeholder="Pesquise por filmes, séries ou animes..."
-                className="pl-10 bg-gray-700 text-white px-4 py-2 rounded-lg placeholder-gray-400 focus:ring-2 focus:ring-red-500 outline-none w-full md:w-80 lg:w-96 transition-all sm:text-sm md:text-base"
-              />
-
-              {query && (
-                <button
-                  onClick={handleClear}
-                  className="ml-2 text-gray-400 hover:text-white transition"
-                >
-                  Limpar
-                </button>
-              )}
-            </div>
+            <SearchComponent 
+              onSearchResults={setSearchResults}
+              onError={setErrorMessage}
+            />
           </nav>
         </div>
       </header>
@@ -348,41 +134,6 @@ export default function Header() {
       {errorMessage && (
         <div className="container mx-auto mt-20 text-center text-red-500">
           {errorMessage}
-        </div>
-      )}
-
-      {suggestions.length > 0 && query && (
-        <div className="absolute bg-gray-700 w-full mt-16 sm:mt-20 md:mt-24 rounded-lg shadow-lg z-50">
-          <ul className="text-white divide-y divide-gray-600">
-            {suggestions.slice(0, 5).map((movie) => (
-              <li
-                key={movie.id}
-                className="p-2 hover:bg-gray-600 cursor-pointer transition duration-200 ease-in-out"
-                onClick={() => {
-                  setQuery(movie.title || movie.name || "");
-                  handleSearch();
-                  setSuggestions([]);
-                }}
-              >
-                <div className="flex items-center space-x-2">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 overflow-hidden rounded-md">
-                    <img
-                      src={
-                        movie.backdrop_path
-                          ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path}`
-                          : "/placeholder.jpg"
-                      }
-                      alt={movie.title || movie.name || "No title available"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span className="text-sm sm:text-base lg:text-lg">
-                    {movie.title || movie.name}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
 
@@ -502,7 +253,6 @@ export default function Header() {
                 </div>
               </div>
 
-              {/* Trailer Section */}
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-white">Trailer</h3>
                 {trailerId ? (
