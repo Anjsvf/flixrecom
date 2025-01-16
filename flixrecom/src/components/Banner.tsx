@@ -215,8 +215,8 @@ export default function Banner() {
             setTimeout(() => {
               setIsTransitioning(false);
               setOldContent(null);
-            },700);
-          },12000);
+            },7);
+          },1);
         }
       } catch (error) {
         console.error("Erro ao buscar conteúdo:", error);
@@ -232,7 +232,7 @@ export default function Banner() {
       if (!isPaused) {
         setIsUpcoming((prev) => !prev);
       }
-    },12000);
+    },6000);
 
     return () => clearInterval(interval);
   }, [isPaused]);
