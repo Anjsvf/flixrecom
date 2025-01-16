@@ -4,9 +4,9 @@ const LoadingSpinner: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center h-full">
       <div className="text-4xl font-bold relative">
-        <span className="text-black">Flixrecom</span>
+        <span className="text-black">Carregando...</span>
         <span className="absolute top-0 left-0 text-red-600 overflow-hidden loading-text">
-          Flixrecom
+          Carregando...
         </span>
       </div>
       <style jsx>{`

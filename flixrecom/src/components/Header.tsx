@@ -249,6 +249,7 @@ export default function Header() {
 
                   {renderWatchProviders(
                     selectedMovie.watchProviders?.results?.BR
+                    
                   )}
                 </div>
               </div>

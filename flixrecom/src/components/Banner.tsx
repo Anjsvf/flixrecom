@@ -49,6 +49,9 @@ export default function Banner() {
   const [isUpcoming, setIsUpcoming] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [oldContent, setOldContent] = useState<Content | null>(null);
+  const [previousContentId, setPreviousContentId] = useState<string | null>(null);
 
   const fetchWatchProviders = async (id: string, type: "movie" | "tv") => {
     try {
@@ -141,6 +144,11 @@ export default function Banner() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
+        if (content) {
+          setOldContent(content);
+          setIsTransitioning(true);
+        }
+
         const endpoints = [
           "/movie/upcoming",
           "/tv/on_the_air",
@@ -209,9 +217,11 @@ export default function Banner() {
         });
 
         if (validContent.length > 0) {
-          const randomContent =
-            validContent[Math.floor(Math.random() * validContent.length)];
-          
+          let randomContent;
+          do {
+            randomContent = validContent[Math.floor(Math.random() * validContent.length)];
+          } while (randomContent.id === previousContentId);
+
           const contentType = randomContent.type === "Documentário" ? "movie" : 
                             randomContent.type === "Filme" ? "movie" : "tv";
           
@@ -229,17 +239,25 @@ export default function Banner() {
             newEpisodes = seasonData?.newEpisodes || false;
           }
 
-          setContent({
-            ...randomContent,
-            trailerId,
-            cast,
-            latestSeason,
-            newEpisodes,
-            streamingPlatforms
-          });
+          setTimeout(() => {
+            setContent({
+              ...randomContent,
+              trailerId,
+              cast,
+              latestSeason,
+              newEpisodes,
+              streamingPlatforms
+            });
+            setPreviousContentId(randomContent.id);
+            setTimeout(() => {
+              setIsTransitioning(false);
+              setOldContent(null);
+            }, 1000);
+          }, 500);
         }
       } catch (error) {
         console.error("Erro ao buscar conteúdo:", error);
+        setIsTransitioning(false);
       }
     };
 
@@ -251,68 +269,91 @@ export default function Banner() {
       if (!isPaused) {
         setIsUpcoming((prev) => !prev);
       }
-    }, 5000);
+    },9000);
 
     return () => clearInterval(interval);
   }, [isPaused]);
 
-  if (!content) {
+  if (!content && !oldContent) {
     return (
       <div className="relative h-[300px] md:h-[500px] bg-black text-white flex items-center justify-center">
-      <LoadingSpinner />
-    </div>
+        <LoadingSpinner />
+      </div>
     );
   }
 
   const currentDate = new Date();
-  const releaseDate = new Date(content.release_date || content.first_air_date || "");
+  const releaseDate = new Date(content?.release_date || content?.first_air_date || "");
   const isUpcomingContent = releaseDate > currentDate;
 
   return (
     <div className="mt-[64px]">
-      <div
-        className="relative h-[300px] md:h-[500px] bg-cover bg-center text-white transition-opacity duration-1000"
-        style={{
-          backgroundImage: content.backdrop_path
-            ? `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`
-            : "url(/placeholder.jpg)",
-        }}
-      >
-        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-        <div className="absolute bottom-5 left-5 p-4 md:bottom-10 md:left-10 lg:left-20 lg:bottom-20">
-          <h2 className="text-2xl md:text-4xl font-bold text-white">
-            {content.title}{" "}
-            <span className="text-sm md:text-base font-light">
-              ({content.type} - {isUpcomingContent ? "Em breve" : "Lançado recentemente"})
-            </span>
-          </h2>
-          <p className="text-sm md:text-base text-gray-300 mt-2 max-w-xs md:max-w-md overflow-hidden text-ellipsis line-clamp-3">
-            {content.overview}
-          </p>
-          {content.type === "Série" && content.latestSeason && (
-            <p className="text-sm md:text-base text-gray-300 mt-2">
-              Nova Temporada: {content.latestSeason.season_number} (Lançada em {new Date(content.latestSeason.air_date).getFullYear()})
-            </p>
-          )}
-          {content.type === "Série" && content.newEpisodes && (
-            <p className="text-sm md:text-base text-gray-300 mt-2">
-              Novos Episódios Disponíveis
-            </p>
-          )}
-          {content.streamingPlatforms && content.streamingPlatforms.length > 0 && (
-            <p className="text-sm md:text-base text-green-400 mt-2">
-              Disponível em: {content.streamingPlatforms.join(", ")}
-            </p>
-          )}
-          <button
-            className="mt-4 px-4 py-2 md:px-6 md:py-3 bg-red-600 rounded hover:bg-red-700 transition-all duration-300 ease-in-out"
-            onClick={() => {
-              setIsPaused(true);
-              setShowModal(true);
+      <div className="relative h-[300px] md:h-[500px] overflow-hidden">
+        {oldContent && (
+          <div
+            className={`absolute inset-0 bg-cover bg-center transition-transform duration-1000 ${
+              isTransitioning ? 'scale-110 opacity-0' : 'scale-100 opacity-100'
+            }`}
+            style={{
+              backgroundImage: oldContent.backdrop_path
+                ? `url(https://image.tmdb.org/t/p/original${oldContent.backdrop_path})`
+                : "url(/placeholder.jpg)",
+              zIndex: 1,
             }}
           >
-            Detalhes
-          </button>
+            <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+          </div>
+        )}
+
+        <div
+          className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ${
+            isTransitioning ? 'scale-100 opacity-0' : 'scale-100 opacity-100'
+          }`}
+          style={{
+            backgroundImage: content?.backdrop_path
+              ? `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`
+              : "url(/placeholder.jpg)",
+            zIndex: 2,
+          }}
+        >
+          <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+          <div className={`absolute bottom-5 left-5 p-4 md:bottom-10 md:left-10 lg:left-20 lg:bottom-20 transition-transform duration-1000 ${
+            isTransitioning ? 'translate-x-[-100%] opacity-0' : 'translate-x-0 opacity-100'
+          }`}>
+            <h2 className="text-2xl md:text-4xl font-bold text-white">
+              {content?.title}{" "}
+              <span className="text-sm md:text-base font-light">
+                ({content?.type} - {isUpcomingContent ? "Em breve" : "Lançado recentemente"})
+              </span>
+            </h2>
+            <p className="text-sm md:text-base text-gray-300 mt-2 max-w-xs md:max-w-md overflow-hidden text-ellipsis line-clamp-3">
+              {content?.overview}
+            </p>
+            {content?.type === "Série" && content?.latestSeason && (
+              <p className="text-sm md:text-base text-gray-300 mt-2">
+                Nova Temporada: {content.latestSeason.season_number} (Lançada em {new Date(content.latestSeason.air_date).getFullYear()})
+              </p>
+            )}
+            {content?.type === "Série" && content?.newEpisodes && (
+              <p className="text-sm md:text-base text-gray-300 mt-2">
+                Novos Episódios Disponíveis
+              </p>
+            )}
+            {content?.streamingPlatforms && content.streamingPlatforms.length > 0 && (
+              <p className="text-sm md:text-base text-green-400 mt-2">
+                Disponível em: {content.streamingPlatforms.join(", ")}
+              </p>
+            )}
+            <button
+              className="mt-4 px-4 py-2 md:px-6 md:py-3 bg-red-600 rounded hover:bg-red-700 transition-all duration-300 ease-in-out"
+              onClick={() => {
+                setIsPaused(true);
+                setShowModal(true);
+              }}
+            >
+              Detalhes
+            </button>
+          </div>
         </div>
       </div>
 
@@ -330,59 +371,58 @@ export default function Banner() {
             </button>
             <div className="flex-1 overflow-y-auto">
               <h2 className="text-xl font-bold text-white mb-3">
-                {content.title}
+                {content?.title}
               </h2>
               <p className="text-gray-400 text-sm italic mb-2">
-                Tipo: {content.type}
+                Tipo: {content?.type}
               </p>
               <img
                 src={
-                  content.backdrop_path
+                  content?.backdrop_path
                     ? `https://image.tmdb.org/t/p/w500${content.backdrop_path}`
                     : "/placeholder.jpg"
                 }
-                alt={content.title}
-                className="w-full h-32 object-cover rounded mb-3"
-              />
-              <p className="mb-3 text-gray-300 text-sm">{content.overview}</p>
-              <p className="text-gray-300 text-sm">
-                Ano de Lançamento:{" "}
-                {new Date(
-                  content.release_date || content.first_air_date || ""
-                ).getFullYear()}
-              </p>
-              <p className="text-gray-300 text-sm">
-                Principais Artistas: {content.cast?.join(", ")}
-              </p>
-              {content.streamingPlatforms && content.streamingPlatforms.length > 0 && (
-                <p className="text-green-400 text-sm mt-2">
-                  Disponível em: {content.streamingPlatforms.join(", ")}
-                </p>
-              )}
-              {content.type === "Série" && content.latestSeason && (
+                alt={content?.title}
+                className="w-full h-32 object-cover rounded mb-3"/>
+                <p className="mb-3 text-gray-300 text-sm">{content?.overview}</p>
                 <p className="text-gray-300 text-sm">
-                  Nova Temporada: {content.latestSeason.season_number} (Lançada em {new Date(content.latestSeason.air_date).getFullYear()})
+                  Ano de Lançamento:{" "}
+                  {new Date(
+                    content?.release_date || content?.first_air_date || ""
+                  ).getFullYear()}
                 </p>
-              )}
-              {content.type === "Série" && content.newEpisodes && (
                 <p className="text-gray-300 text-sm">
-                  Novos Episódios Disponíveis
+                  Principais Artistas: {content?.cast?.join(", ")}
                 </p>
-              )}
-            </div>
-            <div className="flex-1 mt-4 md:mt-0">
-              {content.trailerId ? (
-                <YouTube
-                  videoId={content.trailerId}
-                  opts={{ width: "100%", height: "390" }}
-                />
-              ) : (
-                <p className="text-gray-400">Trailer não disponível.</p>
-              )}
+                {content?.streamingPlatforms && content.streamingPlatforms.length > 0 && (
+                  <p className="text-green-400 text-sm mt-2">
+                    Disponível em: {content.streamingPlatforms.join(", ")}
+                  </p>
+                )}
+                {content?.type === "Série" && content?.latestSeason && (
+                  <p className="text-gray-300 text-sm">
+                    Nova Temporada: {content.latestSeason.season_number} (Lançada em {new Date(content.latestSeason.air_date).getFullYear()})
+                  </p>
+                )}
+                {content?.type === "Série" && content?.newEpisodes && (
+                  <p className="text-gray-300 text-sm">
+                    Novos Episódios Disponíveis
+                  </p>
+                )}
+              </div>
+              <div className="flex-1 mt-4 md:mt-0">
+                {content?.trailerId ? (
+                  <YouTube
+                    videoId={content.trailerId}
+                    opts={{ width: "100%", height: "390" }}
+                  />
+                ) : (
+                  <p className="text-gray-400">Trailer não disponível.</p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
+        )}
+      </div>
+    );
+  }
