@@ -215,90 +215,92 @@ export default function Banner() {
   };
 
   return (
-    <div className="banner p-4 bg-black">
-      <div className="flex flex-wrap justify-between items-center mb-6">
-        <div className="flex flex-wrap gap-4 mb-4 sm:mb-6 justify-center sm:justify-start">
-          {["movie", "tv", "anime", "documentary"].map((cat) => (
-            <button
-              key={cat}
-              className={`px-4 py-2 rounded-full text-sm md:text-base lg:text-lg ${
-                category === cat
-                  ? "bg-red-500 text-white"
-                  : "bg-gray-700 text-white"
-              } hover:bg-gray-600 transition-colors`}
-              onClick={() => handleCategoryChange(cat as typeof category)}
-            >
-              {cat === "movie"
-                ? "Filmes"
-                : cat === "tv"
-                ? "Séries"
-                : cat === "anime"
-                ? "Animes"
-                : "Documentários"}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-4 mb-4 sm:mb-0">
-          <select
-            className="bg-gray-700 text-white px-4 py-2 rounded-full text-sm"
-            value={selectedGenre || ""}
-            onChange={(e) => setSelectedGenre(Number(e.target.value) || null)}
-          >
-            <option value="">Todos os Gêneros</option>
-            {genres.map((genre) => (
-              <option key={genre.id} value={genre.id}>
-                {genre.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            className="bg-gray-700 text-white px-4 py-2 rounded-full w-32 text-sm"
-            placeholder="Digite o ano"
-            value={selectedYear || ""}
-            onChange={(e) => setSelectedYear(Number(e.target.value) || null)}
-          />
-        </div>
-      </div>
-      {loading ? (
-        <p className="text-white">Carregando...</p>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {content.map((item) => (
-            <div
-              key={item.id}
-              className="bg-gray-800 p-2 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105"
-              onClick={() => handleItemClick(item)}
-            >
-              <img
-                src={
-                  item.backdrop_path
-                    ? `https://image.tmdb.org/t/p/w500${item.backdrop_path}`
-                    : "/placeholder.jpg"
-                }
-                alt={item.title || item.name || "Sem título disponível"}
-                className="w-full h-auto object-cover aspect-[2/3] rounded-md"
-              />
-              <h3 className="text-white mt-2 font-bold text-sm sm:text-base">
-                {item.title || item.name}
-              </h3>
-              <p className="text-gray-400 text-xs sm:text-sm">
-                {new Date(
-                  item.release_date || item.first_air_date || ""
-                ).getFullYear()}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-      {selectedItem && (
-        <MovieDetailsModal
-          movie={selectedItem}
-          trailerId={trailerId}
-          onClose={closeModal}
-        />
-      )}
+    <div className="banner p-6 bg-black">
+  <div className="flex flex-wrap justify-between items-center mb-6">
+    <div className="flex flex-wrap gap-4 mb-4 sm:mb-6 justify-center sm:justify-start">
+      {["movie", "tv", "anime", "documentary"].map((cat) => (
+        <button
+          key={cat}
+          className={`px-4 py-2 rounded-full text-sm md:text-base lg:text-lg font-semibold transition-colors duration-300 ease-in-out ${
+            category === cat
+              ? "bg-red-600 text-white shadow-lg"
+              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+          }`}
+          onClick={() => handleCategoryChange(cat as typeof category)}
+        >
+          {cat === "movie"
+            ? "Filmes"
+            : cat === "tv"
+            ? "Séries"
+            : cat === "anime"
+            ? "Animes"
+            : "Documentários"}
+        </button>
+      ))}
     </div>
+
+    <div className="flex gap-4 mb-4 sm:mb-0">
+      <select
+        className="bg-gray-800 text-white px-4 py-2 rounded-full text-sm shadow-md transition duration-200 ease-in-out hover:bg-gray-700"
+        value={selectedGenre || ""}
+        onChange={(e) => setSelectedGenre(Number(e.target.value) || null)}
+      >
+        <option value="">Todos os Gêneros</option>
+        {genres.map((genre) => (
+          <option key={genre.id} value={genre.id}>
+            {genre.name}
+          </option>
+        ))}
+      </select>
+      <input
+        type="number"
+        className="bg-gray-800 text-white px-4 py-2 rounded-full w-32 text-sm shadow-md transition duration-200 ease-in-out hover:bg-gray-700"
+        placeholder="Digite o ano"
+        value={selectedYear || ""}
+        onChange={(e) => setSelectedYear(Number(e.target.value) || null)}
+      />
+    </div>
+  </div>
+
+  {loading ? (
+    <p className="text-white text-center">Carregando...</p>
+  ) : (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+      {content.map((item) => (
+        <div
+          key={item.id}
+          className="bg-gray-800 p-4 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105 shadow-md"
+          onClick={() => handleItemClick(item)}
+        >
+          <img
+            src={
+              item.backdrop_path
+                ? `https://image.tmdb.org/t/p/w500${item.backdrop_path}`
+                : "/placeholder.jpg"
+            }
+            alt={item.title || item.name || "Sem título disponível"}
+            className="w-full h-auto object-cover aspect-[2/3] rounded-md mb-2"
+          />
+          <h3 className="text-white mt-2 font-bold text-sm sm:text-base">
+            {item.title || item.name}
+          </h3>
+          <p className="text-gray-400 text-xs sm:text-sm">
+            {new Date(
+              item.release_date || item.first_air_date || ""
+            ).getFullYear()}
+          </p>
+        </div>
+      ))}
+    </div>
+  )}
+
+  {selectedItem && (
+    <MovieDetailsModal
+      movie={selectedItem}
+      trailerId={trailerId}
+      onClose={closeModal}
+    />
+  )}
+</div>
   );
 }

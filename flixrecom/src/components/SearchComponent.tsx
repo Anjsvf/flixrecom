@@ -16,6 +16,7 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
   const handleSearch = async () => {
     if (!query.trim()) {
       onSearchResults([]);
+      onError(""); // Limpa mensagem de erro
       return;
     }
 
@@ -26,20 +27,17 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
       return;
     }
 
- 
     const match = query.match(/filmes que (?:vão|vai) chegar em (\w+) de (\d{4})/i);
     if (match) {
       await handleUpcomingMoviesSearch(match[1], match[2]);
       return;
     }
 
-
     const actorMatch = query.match(/filmes com (.+)/i);
     if (actorMatch) {
       await handleActorSearch(actorMatch[1]);
       return;
     }
-
     
     await handleDefaultSearch();
   };
@@ -61,10 +59,14 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
 
       if (response.data.results.length === 0) {
         onError("Nenhum resultado encontrado.");
+        onSearchResults([]); // Limpa resultados anteriores
+      } else {
+        onError(""); // Limpa mensagem de erro
+        onSearchResults(response.data.results);
       }
-      onSearchResults(response.data.results);
     } catch {
       onError("Erro ao buscar resultados. Tente novamente.");
+      onSearchResults([]); // Limpa resultados anteriores
     }
   };
 
@@ -83,6 +85,7 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
 
       if (actorResponse.data.results.length === 0) {
         onError("Nenhum ator encontrado.");
+        onSearchResults([]); // Limpa resultados anteriores
         return;
       }
 
@@ -100,10 +103,14 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
 
       if (movieResponse.data.results.length === 0) {
         onError("Nenhum filme encontrado para este ator.");
+        onSearchResults([]); // Limpa resultados anteriores
+      } else {
+        onError(""); // Limpa mensagem de erro
+        onSearchResults(movieResponse.data.results);
       }
-      onSearchResults(movieResponse.data.results);
     } catch {
       onError("Erro ao buscar resultados. Tente novamente.");
+      onSearchResults([]); // Limpa resultados anteriores
     }
   };
 
@@ -123,16 +130,21 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
 
       if (response.data.results.length === 0) {
         onError("Nenhum resultado encontrado.");
+        onSearchResults([]); // Limpa resultados anteriores
+      } else {
+        onError(""); // Limpa mensagem de erro
+        onSearchResults(response.data.results);
       }
-      onSearchResults(response.data.results);
     } catch {
       onError("Erro ao buscar resultados. Tente novamente.");
+      onSearchResults([]); // Limpa resultados anteriores
     }
   };
 
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
+    onError(""); // Limpa mensagem de erro quando o input muda
 
     if (!value.trim()) {
       setSuggestions([]);
@@ -161,6 +173,7 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
     setQuery("");
     setSuggestions([]);
     onSearchResults([]);
+    onError(""); // Limpa mensagem de erro quando limpa a busca
   };
 
   return (

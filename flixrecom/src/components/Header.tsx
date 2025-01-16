@@ -117,19 +117,20 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed w-full top-0 left-0 bg-black bg-opacity-80 z-40">
-        <div className="container mx-auto flex justify-between items-center px-4 py-3">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-red-600 text-center flixrecom-style">
-            flixrecom
-          </h1>
-          <nav className="flex gap-4 items-center text-gray-300">
-            <SearchComponent 
-              onSearchResults={setSearchResults}
-              onError={setErrorMessage}
-            />
-          </nav>
-        </div>
-      </header>
+     
+     <header className="fixed w-full top-0 left-0 bg-black bg-opacity-80 z-40">
+  <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4 py-3">
+    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-red-600 text-center flixrecom-style mb-2 md:mb-0">
+      flixrecom
+    </h1>
+    <nav className="flex gap-4 items-center text-gray-300">
+      <SearchComponent 
+        onSearchResults={setSearchResults}
+        onError={setErrorMessage}
+      />
+    </nav>
+  </div>
+</header>
 
       {errorMessage && (
         <div className="container mx-auto mt-20 text-center text-red-500">
