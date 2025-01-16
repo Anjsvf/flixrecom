@@ -2,47 +2,10 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import YouTube from "react-youtube";
-import LoadingSpinner from './LoadingSpinner'
 
-type ApiResponseItem = {
-  id: string;
-  title?: string;
-  name?: string;
-  overview?: string;
-  backdrop_path?: string;
-  release_date?: string;
-  first_air_date?: string;
-  media_type?: string;
-  watch_providers?: {
-    results: {
-      BR?: {
-        flatrate?: { provider_name: string }[];
-        free?: { provider_name: string }[];
-        ads?: { provider_name: string }[];
-      };
-    };
-  };
-  credits?: {
-    cast: { name: string }[];
-  };
-  seasons?: { air_date: string; season_number: number }[];
-};
-
-type Content = {
-  id: string;
-  title: string;
-  overview: string;
-  backdrop_path: string;
-  release_date?: string;
-  first_air_date?: string;
-  type: "Filme" | "Série" | "Documentário";
-  trailerId?: string | null;
-  cast?: string[];
-  latestSeason?: { air_date: string; season_number: number };
-  newEpisodes?: boolean;
-  streamingPlatforms?: string[];
-};
+import LoadingSpinner from './LoadingSpinner';
+import ContentModal from './ContentModal';
+import { ApiResponseItem, Content } from '../components/types/content';
 
 export default function Banner() {
   const [content, setContent] = useState<Content | null>(null);
@@ -252,8 +215,8 @@ export default function Banner() {
             setTimeout(() => {
               setIsTransitioning(false);
               setOldContent(null);
-            }, 1000);
-          }, 500);
+            },700);
+          },12000);
         }
       } catch (error) {
         console.error("Erro ao buscar conteúdo:", error);
@@ -269,7 +232,7 @@ export default function Banner() {
       if (!isPaused) {
         setIsUpcoming((prev) => !prev);
       }
-    },9000);
+    },12000);
 
     return () => clearInterval(interval);
   }, [isPaused]);
@@ -311,6 +274,7 @@ export default function Banner() {
           }`}
           style={{
             backgroundImage: content?.backdrop_path
+           
               ? `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`
               : "url(/placeholder.jpg)",
             zIndex: 2,
@@ -357,72 +321,14 @@ export default function Banner() {
         </div>
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-gray-900 p-4 rounded-md max-w-4xl w-full mx-4 relative overflow-hidden flex flex-col md:flex-row md:gap-6 max-h-screen">
-            <button
-              className="absolute top-3 right-3 text-white bg-red-500 px-3 py-1 text-sm rounded"
-              onClick={() => {
-                setIsPaused(false);
-                setShowModal(false);
-              }}
-            >
-              Fechar
-            </button>
-            <div className="flex-1 overflow-y-auto">
-              <h2 className="text-xl font-bold text-white mb-3">
-                {content?.title}
-              </h2>
-              <p className="text-gray-400 text-sm italic mb-2">
-                Tipo: {content?.type}
-              </p>
-              <img
-                src={
-                  content?.backdrop_path
-                    ? `https://image.tmdb.org/t/p/w500${content.backdrop_path}`
-                    : "/placeholder.jpg"
-                }
-                alt={content?.title}
-                className="w-full h-32 object-cover rounded mb-3"/>
-                <p className="mb-3 text-gray-300 text-sm">{content?.overview}</p>
-                <p className="text-gray-300 text-sm">
-                  Ano de Lançamento:{" "}
-                  {new Date(
-                    content?.release_date || content?.first_air_date || ""
-                  ).getFullYear()}
-                </p>
-                <p className="text-gray-300 text-sm">
-                  Principais Artistas: {content?.cast?.join(", ")}
-                </p>
-                {content?.streamingPlatforms && content.streamingPlatforms.length > 0 && (
-                  <p className="text-green-400 text-sm mt-2">
-                    Disponível em: {content.streamingPlatforms.join(", ")}
-                  </p>
-                )}
-                {content?.type === "Série" && content?.latestSeason && (
-                  <p className="text-gray-300 text-sm">
-                    Nova Temporada: {content.latestSeason.season_number} (Lançada em {new Date(content.latestSeason.air_date).getFullYear()})
-                  </p>
-                )}
-                {content?.type === "Série" && content?.newEpisodes && (
-                  <p className="text-gray-300 text-sm">
-                    Novos Episódios Disponíveis
-                  </p>
-                )}
-              </div>
-              <div className="flex-1 mt-4 md:mt-0">
-                {content?.trailerId ? (
-                  <YouTube
-                    videoId={content.trailerId}
-                    opts={{ width: "100%", height: "390" }}
-                  />
-                ) : (
-                  <p className="text-gray-400">Trailer não disponível.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
+      <ContentModal 
+        content={content}
+        showModal={showModal}
+        onClose={() => {
+          setIsPaused(false);
+          setShowModal(false);
+        }}
+      />
+    </div>
+  );
+}
