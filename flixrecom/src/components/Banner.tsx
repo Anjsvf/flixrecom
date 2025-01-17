@@ -16,6 +16,36 @@ export default function Banner() {
   const [oldContent, setOldContent] = useState<Content | null>(null);
   const [previousContentId, setPreviousContentId] = useState<string | null>(null);
 
+  
+  const determineContentType = (item: ApiResponseItem) => {
+  
+    if (item.genre_ids?.includes(99)) {
+      return "Documentário";
+    }
+    
+    if (item.first_air_date) {
+      return "Série";
+    }
+   
+    if (item.release_date) {
+      return "Filme";
+    }
+   
+    return "Filme";
+  };
+
+  
+  const generateDefaultOverview = (type: string, title: string) => {
+    switch (type) {
+      case "Série":
+        return `Nova série: ${title}. Mais informações em breve.`;
+      case "Documentário":
+        return `Documentário: ${title}. Explore esta nova produção documental.`;
+      default:
+        return `${title}. Mais informações em breve.`;
+    }
+  };
+
   const fetchWatchProviders = async (id: string, type: "movie" | "tv") => {
     try {
       const response = await axios.get(
@@ -53,10 +83,29 @@ export default function Banner() {
           },
         }
       );
-      const trailers = response.data.results.filter(
+      
+     
+      let trailers = response.data.results.filter(
         (video: { type: string; site: string }) =>
           video.type === "Trailer" && video.site === "YouTube"
       );
+      
+     
+      if (trailers.length === 0) {
+        const responseEn = await axios.get(
+          `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/${type}/${id}/videos`,
+          {
+            params: {
+              api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+            },
+          }
+        );
+        trailers = responseEn.data.results.filter(
+          (video: { type: string; site: string }) =>
+            video.type === "Trailer" && video.site === "YouTube"
+        );
+      }
+      
       return trailers.length > 0 ? trailers[0].key : null;
     } catch (error) {
       console.error("Erro ao buscar trailer:", error);
@@ -93,7 +142,13 @@ export default function Banner() {
           },
         }
       );
-      const seasons = response.data.seasons;
+      
+      const seasons = response.data.seasons.filter((season: any) => 
+        season.season_number > 0 && season.air_date // Filtra temporadas especiais e sem data
+      );
+      
+      if (seasons.length === 0) return null;
+      
       const latestSeason = seasons[seasons.length - 1];
       const currentYear = new Date().getFullYear();
       const newEpisodes = new Date(latestSeason.air_date).getFullYear() === currentYear;
@@ -132,44 +187,27 @@ export default function Banner() {
 
         const [upcomingMovies, onTheAirSeries, documentaries, popularSeries] = responses;
 
+        const processApiResponse = (item: ApiResponseItem) => {
+          const type = determineContentType(item);
+          const title = item.title || item.name || "Título não disponível";
+          return {
+            id: item.id,
+            title: title,
+            overview: item.overview || generateDefaultOverview(type, title),
+            backdrop_path: item.backdrop_path,
+            release_date: item.release_date,
+            first_air_date: item.first_air_date,
+            type: type,
+            genre_ids: item.genre_ids || [],
+          };
+        };
+
         const allContent: Content[] = [
-          ...upcomingMovies.data.results.map((item: ApiResponseItem) => ({
-            id: item.id,
-            title: item.title || item.name || "Sem título",
-            overview: item.overview || "Descrição não disponível.",
-            backdrop_path: item.backdrop_path || "",
-            release_date: item.release_date,
-            first_air_date: item.first_air_date,
-            type: "Filme",
-          })),
-          ...onTheAirSeries.data.results.map((item: ApiResponseItem) => ({
-            id: item.id,
-            title: item.title || item.name || "Sem título",
-            overview: item.overview || "Descrição não disponível.",
-            backdrop_path: item.backdrop_path || "",
-            release_date: item.release_date,
-            first_air_date: item.first_air_date,
-            type: "Série",
-          })),
-          ...documentaries.data.results.map((item: ApiResponseItem) => ({
-            id: item.id,
-            title: item.title || item.name || "Sem título",
-            overview: item.overview || "Descrição não disponível.",
-            backdrop_path: item.backdrop_path || "",
-            release_date: item.release_date,
-            first_air_date: item.first_air_date,
-            type: "Documentário",
-          })),
-          ...popularSeries.data.results.map((item: ApiResponseItem) => ({
-            id: item.id,
-            title: item.title || item.name || "Sem título",
-            overview: item.overview || "Descrição não disponível.",
-            backdrop_path: item.backdrop_path || "",
-            release_date: item.release_date,
-            first_air_date: item.first_air_date,
-            type: "Série",
-          }))
-        ];
+          ...upcomingMovies.data.results.map(processApiResponse),
+          ...onTheAirSeries.data.results.map(processApiResponse),
+          ...documentaries.data.results.map(processApiResponse),
+          ...popularSeries.data.results.map(processApiResponse),
+        ].filter(item => item.backdrop_path); // Filtra itens sem imagem de fundo
 
         const validContent = allContent.filter((item) => {
           const currentDate = new Date();
@@ -183,10 +221,9 @@ export default function Banner() {
           let randomContent;
           do {
             randomContent = validContent[Math.floor(Math.random() * validContent.length)];
-          } while (randomContent.id === previousContentId);
+          } while (randomContent.id === previousContentId && validContent.length > 1);
 
-          const contentType = randomContent.type === "Documentário" ? "movie" : 
-                            randomContent.type === "Filme" ? "movie" : "tv";
+          const contentType = randomContent.type === "Série" ? "tv" : "movie";
           
           const [trailerId, cast, streamingPlatforms] = await Promise.all([
             fetchTrailer(randomContent.id, contentType),
@@ -198,8 +235,10 @@ export default function Banner() {
           let newEpisodes = false;
           if (randomContent.type === "Série") {
             const seasonData = await fetchLatestSeason(randomContent.id);
-            latestSeason = seasonData?.latestSeason;
-            newEpisodes = seasonData?.newEpisodes || false;
+            if (seasonData) {
+              latestSeason = seasonData.latestSeason;
+              newEpisodes = seasonData.newEpisodes;
+            }
           }
 
           setTimeout(() => {
@@ -215,8 +254,8 @@ export default function Banner() {
             setTimeout(() => {
               setIsTransitioning(false);
               setOldContent(null);
-            },7);
-          },1);
+            }, 700);
+          }, 100);
         }
       } catch (error) {
         console.error("Erro ao buscar conteúdo:", error);
@@ -232,7 +271,7 @@ export default function Banner() {
       if (!isPaused) {
         setIsUpcoming((prev) => !prev);
       }
-    },6000);
+    }, 6000);
 
     return () => clearInterval(interval);
   }, [isPaused]);
@@ -250,7 +289,7 @@ export default function Banner() {
   const isUpcomingContent = releaseDate > currentDate;
 
   return (
-    <div className="mt-[64px]">
+    <div className="mt-[96px]">
       <div className="relative h-[300px] md:h-[500px] overflow-hidden">
         {oldContent && (
           <div
@@ -274,7 +313,6 @@ export default function Banner() {
           }`}
           style={{
             backgroundImage: content?.backdrop_path
-           
               ? `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`
               : "url(/placeholder.jpg)",
             zIndex: 2,
