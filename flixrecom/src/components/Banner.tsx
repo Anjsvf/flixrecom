@@ -16,25 +16,19 @@ export default function Banner() {
   const [oldContent, setOldContent] = useState<Content | null>(null);
   const [previousContentId, setPreviousContentId] = useState<string | null>(null);
 
-  
   const determineContentType = (item: ApiResponseItem) => {
-  
     if (item.genre_ids?.includes(99)) {
       return "Documentário";
     }
-    
     if (item.first_air_date) {
       return "Série";
     }
-   
     if (item.release_date) {
       return "Filme";
     }
-   
     return "Filme";
   };
 
-  
   const generateDefaultOverview = (type: string, title: string) => {
     switch (type) {
       case "Série":
@@ -84,13 +78,11 @@ export default function Banner() {
         }
       );
       
-     
       let trailers = response.data.results.filter(
         (video: { type: string; site: string }) =>
           video.type === "Trailer" && video.site === "YouTube"
       );
       
-     
       if (trailers.length === 0) {
         const responseEn = await axios.get(
           `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/${type}/${id}/videos`,
@@ -143,8 +135,8 @@ export default function Banner() {
         }
       );
       
-      const seasons = response.data.seasons.filter((season: any) => 
-        season.season_number > 0 && season.air_date // Filtra temporadas especiais e sem data
+      const seasons = response.data.seasons.filter((season: { season_number: number; air_date: string }) => 
+        season.season_number > 0 && season.air_date 
       );
       
       if (seasons.length === 0) return null;
