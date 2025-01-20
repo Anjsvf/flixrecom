@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { FaSearch } from "react-icons/fa";
-import { Movie } from "./Types"; 
+import { Movie } from "./Types";
 
 interface SearchProps {
   onSearchResults: (results: Movie[]) => void;
@@ -9,25 +9,45 @@ interface SearchProps {
   onSuggestionClick?: (movie: Movie) => void;
 }
 
-export default function SearchComponent({ onSearchResults, onError, onSuggestionClick }: SearchProps) {
+export default function SearchComponent({
+  onSearchResults,
+  onError,
+  onSuggestionClick,
+}: SearchProps) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Movie[]>([]);
+
+  const filterUpcomingResults = (results: Movie[], type: "movie" | "tv") => {
+    const currentYear = new Date().getFullYear();
+    return results.filter((item) => {
+      const releaseDate =
+        type === "movie" ? item.release_date : item.first_air_date;
+      if (!releaseDate) return false;
+      const itemYear = new Date(releaseDate).getFullYear();
+      return itemYear >= currentYear;
+    });
+  };
 
   const handleSearch = async () => {
     if (!query.trim()) {
       onSearchResults([]);
-      onError(""); // Limpa mensagem de erro
+      onError("");
       return;
     }
 
-    setSuggestions([]); 
+    setSuggestions([]);
 
-    if (!process.env.NEXT_PUBLIC_TMDB_API_KEY || !process.env.NEXT_PUBLIC_TMDB_BASE_URL) {
+    if (
+      !process.env.NEXT_PUBLIC_TMDB_API_KEY ||
+      !process.env.NEXT_PUBLIC_TMDB_BASE_URL
+    ) {
       onError("Configuração da API inválida.");
       return;
     }
 
-    const match = query.match(/filmes que (?:vão|vai) chegar em (\w+) de (\d{4})/i);
+    const match = query.match(
+      /filmes que (?:vão|vai) chegar em (\w+) de (\d{4})/i
+    );
     if (match) {
       await handleUpcomingMoviesSearch(match[1], match[2]);
       return;
@@ -38,35 +58,87 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
       await handleActorSearch(actorMatch[1]);
       return;
     }
-    
+
+    const upcomingMoviesMatch = query.match(
+      /filmes que (?:vão|vai) chegar em breve/i
+    );
+    if (upcomingMoviesMatch) {
+      await handleUpcomingSearch("movie");
+      return;
+    }
+
+    const upcomingSeriesMatch = query.match(
+      /séries que (?:vão|vai) chegar em breve/i
+    );
+    if (upcomingSeriesMatch) {
+      await handleUpcomingSearch("tv");
+      return;
+    }
+
     await handleDefaultSearch();
+  };
+
+  const handleUpcomingSearch = async (type: "movie" | "tv") => {
+    try {
+      const endpoint = type === "movie" ? "/movie/upcoming" : "/tv/on_the_air";
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}${endpoint}`,
+        {
+          params: {
+            api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
+            language: "pt-BR",
+          },
+        }
+      );
+
+      const filteredResults = filterUpcomingResults(
+        response.data.results,
+        type
+      );
+
+      if (filteredResults.length === 0) {
+        onError(`Nenhum ${type === "movie" ? "filme" : "série"} encontrado.`);
+        onSearchResults([]);
+      } else {
+        onError("");
+        onSearchResults(filteredResults);
+      }
+    } catch {
+      onError("Erro ao buscar resultados. Tente novamente.");
+      onSearchResults([]);
+    }
   };
 
   const handleUpcomingMoviesSearch = async (month: string, year: string) => {
     try {
-      const monthNumber = new Date(Date.parse(month + " 1, 2021")).getMonth() + 1;
+      const monthNumber =
+        new Date(Date.parse(month + " 1, 2021")).getMonth() + 1;
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/movie`,
         {
           params: {
             api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
             language: "pt-BR",
-            primary_release_date_gte: `${year}-${monthNumber.toString().padStart(2, "0")}-01`,
-            primary_release_date_lte: `${year}-${monthNumber.toString().padStart(2, "0")}-31`,
+            primary_release_date_gte: `${year}-${monthNumber
+              .toString()
+              .padStart(2, "0")}-01`,
+            primary_release_date_lte: `${year}-${monthNumber
+              .toString()
+              .padStart(2, "0")}-31`,
           },
         }
       );
 
       if (response.data.results.length === 0) {
         onError("Nenhum resultado encontrado.");
-        onSearchResults([]); // Limpa resultados anteriores
+        onSearchResults([]);
       } else {
-        onError(""); // Limpa mensagem de erro
+        onError("");
         onSearchResults(response.data.results);
       }
     } catch {
       onError("Erro ao buscar resultados. Tente novamente.");
-      onSearchResults([]); // Limpa resultados anteriores
+      onSearchResults([]);
     }
   };
 
@@ -85,7 +157,7 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
 
       if (actorResponse.data.results.length === 0) {
         onError("Nenhum ator encontrado.");
-        onSearchResults([]); // Limpa resultados anteriores
+        onSearchResults([]);
         return;
       }
 
@@ -103,14 +175,14 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
 
       if (movieResponse.data.results.length === 0) {
         onError("Nenhum filme encontrado para este ator.");
-        onSearchResults([]); // Limpa resultados anteriores
+        onSearchResults([]);
       } else {
-        onError(""); // Limpa mensagem de erro
+        onError("");
         onSearchResults(movieResponse.data.results);
       }
     } catch {
       onError("Erro ao buscar resultados. Tente novamente.");
-      onSearchResults([]); // Limpa resultados anteriores
+      onSearchResults([]);
     }
   };
 
@@ -130,21 +202,21 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
 
       if (response.data.results.length === 0) {
         onError("Nenhum resultado encontrado.");
-        onSearchResults([]); // Limpa resultados anteriores
+        onSearchResults([]);
       } else {
-        onError(""); // Limpa mensagem de erro
+        onError("");
         onSearchResults(response.data.results);
       }
     } catch {
       onError("Erro ao buscar resultados. Tente novamente.");
-      onSearchResults([]); // Limpa resultados anteriores
+      onSearchResults([]);
     }
   };
 
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    onError(""); // Limpa mensagem de erro quando o input muda
+    onError("");
 
     if (!value.trim()) {
       setSuggestions([]);
@@ -173,7 +245,7 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
     setQuery("");
     setSuggestions([]);
     onSearchResults([]);
-    onError(""); // Limpa mensagem de erro quando limpa a busca
+    onError("");
   };
 
   return (
@@ -191,7 +263,7 @@ export default function SearchComponent({ onSearchResults, onError, onSuggestion
         onKeyDown={(e) => {
           if (e.key === "Enter") handleSearch();
         }}
-        placeholder="Pesquise por filmes, séries ou animes..."
+        placeholder="Pesquise por filmes, séries, animes, filmes que vão chegar em breve..."
         className="pl-10 bg-gray-700 text-white px-4 py-2 rounded-lg placeholder-gray-400 focus:ring-2 focus:ring-red-500 outline-none w-full md:w-80 lg:w-96 transition-all sm:text-sm md:text-base"
       />
 

@@ -1,39 +1,7 @@
-import React from 'react';
-import YouTube from "react-youtube";
-import { FaStar } from "react-icons/fa";
-
-interface WatchProvider {
-  provider_id: number;
-  provider_name: string;
-  logo_path: string;
-}
-
-interface WatchProviders {
-  flatrate?: WatchProvider[];
-  rent?: WatchProvider[];
-  buy?: WatchProvider[];
-}
-
-interface Movie {
-  id: number;
-  title?: string;
-  name?: string;
-  poster_path?: string | null;
-  backdrop_path?: string | null;
-  overview?: string;
-  release_date?: string;
-  first_air_date?: string;
-  vote_average?: number;
-  vote_count?: number;
-  genres?: { id: number; name: string }[];
-  credits?: { cast: { id: number; name: string }[] };
-  production_countries?: { name: string }[];
-  "watch/providers"?: {
-    results: {
-      BR?: WatchProviders;
-    };
-  };
-}
+import React, { useEffect } from 'react';
+import YouTube from 'react-youtube';
+import { FaStar } from 'react-icons/fa';
+import { Movie, WatchProviders, WatchProvider } from './Types';
 
 interface MovieDetailsModalProps {
   movie: Movie | null;
@@ -42,37 +10,69 @@ interface MovieDetailsModalProps {
 }
 
 const MovieDetailsModal = ({ movie, trailerId, onClose }: MovieDetailsModalProps) => {
+  useEffect(() => {
+    if (movie) {
+      console.group('Movie Details Debug');
+      console.log('Complete movie object:', movie);
+      console.log('Watch providers structure:', movie.watchProviders);
+      console.groupEnd();
+    }
+  }, [movie]);
+
   if (!movie) return null;
 
   const renderWatchProviders = (providers: WatchProviders | undefined) => {
-    if (!providers) {
+    console.group('Render Watch Providers Debug');
+    console.log('Received providers:', providers);
+    console.groupEnd();
+
+    if (!providers || (Object.keys(providers).length === 0)) {
+      console.log('No providers available');
       return (
         <div className="mt-4">
           <h3 className="text-white font-bold mb-2">Onde Assistir</h3>
           <p className="text-gray-400 text-sm">
-            Informação não disponível para sua região.
+            Informação não disponível.
           </p>
         </div>
       );
     }
 
     const sections = [
-      { title: "Streaming", data: providers.flatrate },
-      { title: "Alugar", data: providers.rent },
-      { title: "Comprar", data: providers.buy },
+      { title: 'Disponível em Streaming', data: providers.flatrate || [] },
+      { title: 'Alugar', data: providers.rent || [] },
+      { title: 'Comprar', data: providers.buy || [] },
     ];
+
+    console.log('Processed sections:', sections.map(s => ({
+      title: s.title,
+      count: s.data.length
+    })));
+
+    const hasAnyProviders = sections.some((section) => section.data.length > 0);
+    console.log('Has any providers:', hasAnyProviders);
+
+    if (!hasAnyProviders) {
+      return (
+        <div className="mt-4">
+          <h3 className="text-white font-bold mb-2">Onde Assistir</h3>
+          <p className="text-gray-400 text-sm">
+            Nenhuma opção de streaming disponível no momento.
+          </p>
+        </div>
+      );
+    }
 
     return (
       <div className="mt-4">
         <h3 className="text-white font-bold mb-2">Onde Assistir</h3>
         {sections.map(
           (section) =>
-            section.data &&
             section.data.length > 0 && (
               <div key={section.title} className="mb-3">
                 <h4 className="text-gray-400 text-sm mb-2">{section.title}:</h4>
                 <div className="flex flex-wrap gap-2">
-                  {section.data.map((provider) => (
+                  {section.data.map((provider: WatchProvider) => (
                     <div
                       key={provider.provider_id}
                       className="flex items-center bg-gray-800 rounded-lg p-2"
@@ -91,6 +91,25 @@ const MovieDetailsModal = ({ movie, trailerId, onClose }: MovieDetailsModalProps
               </div>
             )
         )}
+      </div>
+    );
+  };
+
+  const renderRating = () => {
+    const rating = movie.vote_average ? Math.round(movie.vote_average / 2) : 0;
+    return (
+      <div className="flex items-center">
+        {Array.from({ length: 5 }, (_, i) => (
+          <FaStar
+            key={i}
+            className={`${
+              i < rating ? 'text-yellow-400' : 'text-gray-600'
+            } w-4 h-4`}
+          />
+        ))}
+        <span className="text-gray-400 ml-2">
+          ({movie.vote_count?.toLocaleString()} votos)
+        </span>
       </div>
     );
   };
@@ -115,7 +134,7 @@ const MovieDetailsModal = ({ movie, trailerId, onClose }: MovieDetailsModalProps
               src={
                 movie.backdrop_path
                   ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path}`
-                  : "/placeholder.jpg"
+                  : '/placeholder.jpg'
               }
               alt={movie.title || movie.name}
               className="w-full rounded-lg shadow-lg"
@@ -125,47 +144,36 @@ const MovieDetailsModal = ({ movie, trailerId, onClose }: MovieDetailsModalProps
 
             <div className="space-y-2">
               <p className="text-gray-300">
-                <span className="font-semibold">Lançamento:</span>{" "}
+                <span className="font-semibold">Lançamento:</span>{' '}
                 {new Date(
-                  movie.release_date || movie.first_air_date || ""
-                ).toLocaleDateString("pt-BR")}
+                  movie.release_date || movie.first_air_date || ''
+                ).toLocaleDateString('pt-BR')}
               </p>
 
               <div className="flex items-center">
                 <span className="text-gray-300 font-semibold mr-2">
                   Avaliação:
                 </span>
-                <div className="flex items-center">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <FaStar
-                      key={i}
-                      className={`${
-                        i < Math.round((movie.vote_average || 0) / 2)
-                          ? "text-yellow-400"
-                          : "text-gray-600"
-                      } w-4 h-4`}
-                    />
-                  ))}
-                  <span className="text-gray-400 ml-2">
-                    ({movie.vote_count} votos)
-                  </span>
-                </div>
+                {renderRating()}
               </div>
 
               <p className="text-gray-300">
-                <span className="font-semibold">Gêneros:</span>{" "}
-                {movie.genres?.map((genre) => genre.name).join(", ")}
+                <span className="font-semibold">Gêneros:</span>{' '}
+                {movie.genres?.map((genre) => genre.name).join(', ')}
               </p>
 
               <p className="text-gray-300">
-                <span className="font-semibold">Elenco Principal:</span>{" "}
+                <span className="font-semibold">Elenco Principal:</span>{' '}
                 {movie.credits?.cast
                   .slice(0, 3)
                   .map((actor) => actor.name)
-                  .join(", ")}
+                  .join(', ')}
               </p>
 
-              {renderWatchProviders(movie["watch/providers"]?.results?.BR)}
+              {(() => {
+                console.log('Rendering watch providers with:', movie.watchProviders?.results?.BR);
+                return renderWatchProviders(movie.watchProviders?.results?.BR);
+              })()}
             </div>
           </div>
 
@@ -176,8 +184,8 @@ const MovieDetailsModal = ({ movie, trailerId, onClose }: MovieDetailsModalProps
                 <YouTube
                   videoId={trailerId}
                   opts={{
-                    width: "100%",
-                    height: "100%",
+                    width: '100%',
+                    height: '100%',
                     playerVars: {
                       autoplay: 0,
                     },
