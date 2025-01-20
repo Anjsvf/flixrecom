@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LoadingSpinner from './LoadingSpinner';
 import axios from "axios";
 import MovieDetailsModal from "./MovieDetailsModal";
 import { Movie, Genre, Video, } from "./Types";
@@ -233,7 +234,9 @@ export default function Banner() {
       </div>
 
       {loading ? (
-        <p className="text-white text-center">Carregando...</p>
+    <div className="relative h-[300px] md:h-[500px] bg-black text-white flex items-center justify-center">
+    <LoadingSpinner />
+  </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
           {content.map((item) => (

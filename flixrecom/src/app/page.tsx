@@ -5,6 +5,7 @@
 import Header from "../components/Header";
 import Banner from "../components/Banner";
 import MovieRow from "../components/MovieRow";
+import Footer from "@/components/Footer";
 
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
          
         />
       </div>
+      <Footer/>
     </div>
   );
 }

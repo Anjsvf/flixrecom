@@ -199,7 +199,7 @@ export default function Banner() {
           ...onTheAirSeries.data.results.map(processApiResponse),
           ...documentaries.data.results.map(processApiResponse),
           ...popularSeries.data.results.map(processApiResponse),
-        ].filter(item => item.backdrop_path); // Filtra itens sem imagem de fundo
+        ].filter(item => item.backdrop_path); 
 
         const validContent = allContent.filter((item) => {
           const currentDate = new Date();
