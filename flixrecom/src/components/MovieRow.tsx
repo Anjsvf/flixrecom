@@ -3,41 +3,16 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import MovieDetailsModal from "./MovieDetailsModal";
-
-interface Content {
-  id: number;
-  title?: string;
-  name?: string;
-  backdrop_path: string | null;
-  overview: string;
-  release_date?: string;
-  first_air_date?: string;
-  likes?: number;
-  vote_average?: number;
-  vote_count?: number;
-  genres?: { id: number; name: string }[];
-  credits?: { cast: { id: number; name: string }[] };
-}
-
-interface Genre {
-  id: number;
-  name: string;
-}
-
-interface Video {
-  type: string;
-  site: string;
-  key: string;
-}
+import { Movie, Genre, Video, } from "./Types";
 
 export default function Banner() {
-  const [content, setContent] = useState<Content[]>([]);
+  const [content, setContent] = useState<Movie[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [category, setCategory] = useState<"movie" | "tv" | "anime" | "documentary">("movie");
   const [loading, setLoading] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Content | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Movie | null>(null);
   const [trailerId, setTrailerId] = useState<string | null>(null);
 
   const fetchTranslation = async (itemId: number, mediaType: string) => {
@@ -48,7 +23,7 @@ export default function Banner() {
       });
 
       const ptTranslation = response.data.translations.find(
-        (t: any) => t.iso_639_1 === "pt-BR" || t.iso_639_1 === "pt"
+        (t: { iso_639_1: string }) => t.iso_639_1 === "pt-BR" || t.iso_639_1 === "pt"
       );
 
       return ptTranslation?.data || null;
@@ -64,7 +39,7 @@ export default function Banner() {
       const response = await axios.get(url, {
         params: {
           api_key: process.env.NEXT_PUBLIC_TMDB_API_KEY,
-          append_to_response: "credits,videos",
+          append_to_response: "credits,videos,watch/providers",
         },
       });
       return response.data;
@@ -118,7 +93,7 @@ export default function Banner() {
     }
   };
 
-  const handleItemClick = async (item: Content) => {
+  const handleItemClick = async (item: Movie) => {
     try {
       const mediaType = category === "tv" || category === "anime" ? "tv" : "movie";
       const [details, translation] = await Promise.all([
@@ -128,7 +103,7 @@ export default function Banner() {
 
       const newTrailerId = await fetchTrailer(item.id);
 
-      const updatedItem = {
+      const updatedItem: Movie = {
         ...item,
         ...details,
         title: translation?.title || details.title || item.title,
@@ -171,9 +146,8 @@ export default function Banner() {
         const response = await axios.get(url, { params });
         const items = response.data.results;
 
-       
         const detailedItems = await Promise.all(
-          items.map(async (item: any) => {
+          items.map(async (item: Movie) => {
             const mediaType = category === "tv" || category === "anime" ? "tv" : "movie";
             const details = await fetchItemDetails(item.id, mediaType);
             return {
@@ -181,6 +155,7 @@ export default function Banner() {
               ...details,
               genres: details?.genres || [],
               credits: details?.credits || { cast: [] },
+              watchProviders: details["watch/providers"] || {},
             };
           })
         );
