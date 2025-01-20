@@ -147,7 +147,7 @@ export default function Header() {
             {searchResults.map((movie) => (
               <div
                 key={movie.id}
-                className="bg-gray-800 p-2 rounded cursor-pointer transform hover:scale-105 transition-transform duration-200"
+                className="bg-black p-2 rounded cursor-pointer transform hover:scale-105 transition-transform duration-200"
                 onClick={() =>
                   fetchMovieDetails(movie.id, !!movie.first_air_date)
                 }

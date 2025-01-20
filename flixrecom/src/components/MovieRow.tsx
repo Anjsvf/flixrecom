@@ -242,7 +242,7 @@ export default function Banner() {
           {content.map((item) => (
             <div
               key={item.id}
-              className="bg-gray-800 p-4 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105 shadow-md"
+              className="bg-black p-4 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105 shadow-md"
               onClick={() => handleItemClick(item)}
             >
               <img

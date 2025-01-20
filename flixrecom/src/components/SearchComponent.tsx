@@ -277,7 +277,7 @@ export default function SearchComponent({
       )}
 
       {suggestions.length > 0 && query && (
-        <div className="absolute top-full left-0 right-0 bg-gray-700 mt-1 rounded-lg shadow-lg z-50">
+        <div className="absolute top-full left-0 right-0 bg-black mt-1 rounded-lg shadow-lg z-50">
           <ul className="text-white divide-y divide-gray-600">
             {suggestions.slice(0, 5).map((movie) => (
               <li
