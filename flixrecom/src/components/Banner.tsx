@@ -270,6 +270,7 @@ export default function Banner() {
 
   if (!content && !oldContent) {
     return (
+      
       <div className="relative h-[300px] md:h-[500px] bg-black text-white flex items-center justify-center">
         <LoadingSpinner />
       </div>
